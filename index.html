@@ -1,1070 +1,512 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Night Shift Calorie Tracker</title>
-    <style>
-        :root {
-            --color-primary: #38bdf8;
-            --color-primary-hover: #0284c7;
-            --color-bg-dark: #0f172a;
-            --color-bg-surface: #1e293b;
-            --color-text-primary: #f1f5f9;
-            --color-text-secondary: #cbd5e1;
-            --color-success: #10b981;
-            --color-warning: #f59e0b;
-            --color-error: #ef4444;
-            --color-accent: #a78bfa;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
-            color: var(--color-text-primary);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 30px;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
-            border: 2px solid rgba(56, 189, 248, 0.3);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-20px, -20px); }
-        }
-
-        h1 {
-            font-size: 3.5em;
-            margin-bottom: 12px;
-            background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 50%, #f97316 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -1px;
-            font-weight: 900;
-            position: relative;
-            z-index: 1;
-        }
-
-        .subtitle {
-            color: var(--color-text-secondary);
-            font-size: 1.1em;
-            font-weight: 500;
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 35px;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(30, 41, 59, 0.5) 100%);
-            border: 2px solid rgba(56, 189, 248, 0.4);
-            border-radius: 24px;
-            padding: 32px;
-            backdrop-filter: blur(30px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .card:hover {
-            border-color: rgba(56, 189, 248, 0.6);
-            box-shadow: 0 24px 80px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            transform: translateY(-8px);
-        }
-
-        .card-header {
-            font-size: 0.85em;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-        }
-
-        .card-value {
-            font-size: 2.8em;
-            font-weight: 800;
-            margin-bottom: 12px;
-            color: var(--color-primary);
-            letter-spacing: -1px;
-        }
-
-        .card-subtext {
-            font-size: 0.85em;
-            color: var(--color-text-secondary);
-        }
-
-        .progress-ring {
-            width: 120px;
-            height: 120px;
-            margin: 10px auto;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .input-group input,
-        .input-group select {
-            flex: 1;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: var(--color-text-primary);
-            font-size: 1em;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus,
-        .input-group select:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            background: rgba(56, 189, 248, 0.1);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-        }
-
-        .input-group input::placeholder {
-            color: var(--color-text-secondary);
-        }
-
-        button {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, var(--color-primary) 0%, #0ea5e9 100%);
-            color: var(--color-bg-dark);
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            font-size: 1em;
-            box-shadow: 0 8px 24px rgba(56, 189, 248, 0.35), 0 0 0 0 rgba(56, 189, 248, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.2);
-            transition: left 0.4s ease;
-        }
-
-        button:hover {
-            background: linear-gradient(135deg, var(--color-primary-hover) 0%, #06b6d4 100%);
-            transform: translateY(-5px);
-            box-shadow: 0 12px 36px rgba(56, 189, 248, 0.45), 0 0 20px rgba(56, 189, 248, 0.2);
-        }
-
-        button:hover::before {
-            left: 100%;
-        }
-
-        button:active {
-            transform: translateY(-2px);
-        }
-
-        .btn-small {
-            padding: 8px 14px;
-            font-size: 0.9em;
-        }
-
-        .btn-danger {
-            background: var(--color-error);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .food-list {
-            margin-top: 20px;
-        }
-
-        .food-item {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(167, 139, 250, 0.08) 100%);
-            border: 2px solid rgba(56, 189, 248, 0.5);
-            border-left: 6px solid var(--color-primary);
-            padding: 20px;
-            margin-bottom: 14px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 8px 28px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        }
-
-        .food-item:hover {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(167, 139, 250, 0.12) 100%);
-            border-left-color: #f97316;
-            border-color: rgba(56, 189, 248, 0.7);
-            box-shadow: 0 16px 40px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-            transform: translateY(-4px);
-        }
-
-        .food-details {
-            flex: 1;
-        }
-
-        .food-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--color-text-primary);
-        }
-
-        .food-calories {
-            font-size: 0.85em;
-            color: var(--color-text-secondary);
-        }
-
-        .food-calories-value {
-            color: var(--color-primary);
-            font-weight: 600;
-        }
-
-        .workout-list {
-            margin-top: 20px;
-        }
-
-        .workout-item {
-            background: rgba(16, 185, 129, 0.1);
-            border-left: 3px solid var(--color-success);
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .workout-details {
-            flex: 1;
-        }
-
-        .workout-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--color-text-primary);
-        }
-
-        .workout-burned {
-            font-size: 0.85em;
-            color: var(--color-success);
-            font-weight: 600;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 600px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .stat {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .stat-label {
-            font-size: 0.8em;
-            color: var(--color-text-secondary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: var(--color-primary);
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
-            border-bottom: 2px solid rgba(56, 189, 248, 0.15);
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--color-text-secondary);
-            border: 2px solid rgba(56, 189, 248, 0.25);
-            border-bottom: 3px solid transparent;
-            padding: 12px 22px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            border-radius: 12px 12px 0 0;
-            margin-bottom: -2px;
-            font-size: 0.95em;
-        }
-
-        .tab-btn.active {
-            color: var(--color-primary);
-            border-color: rgba(56, 189, 248, 0.6);
-            border-bottom-color: var(--color-primary);
-            background: rgba(56, 189, 248, 0.15);
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
-        }
-
-        .tab-btn:hover {
-            color: var(--color-primary);
-            background: rgba(56, 189, 248, 0.12);
-            border-color: rgba(56, 189, 248, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--color-text-secondary);
-        }
-
-        .empty-state-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .goal-input {
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--color-text-primary);
-        }
-
-        .preset-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-
-        .preset-btn {
-            padding: 10px 16px;
-            font-size: 0.9em;
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--color-text-secondary);
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            font-weight: 600;
-        }
-
-        .preset-btn:hover {
-            background: var(--color-primary);
-            color: var(--color-bg-dark);
-            border-color: var(--color-primary);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(56, 189, 248, 0.3);
-        }
-
-        .reset-btn {
-            background: transparent;
-            color: var(--color-error);
-            border: 1px solid var(--color-error);
-            padding: 10px 16px;
-            font-size: 0.85em;
-            margin-top: 15px;
-        }
-
-        .reset-btn:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        .macro-bar {
-            margin: 20px 0;
-        }
-
-        .macro-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.85em;
-        }
-
-        .macro-progress {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .macro-fill {
-            height: 100%;
-            background: var(--color-primary);
-            transition: width 0.3s ease;
-        }
-
-        .night-shift-tip {
-            background: rgba(167, 139, 250, 0.1);
-            border-left: 3px solid var(--color-accent);
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            color: var(--color-text-secondary);
-            margin-top: 15px;
-            line-height: 1.5;
-        }
-
-        .success-message {
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid var(--color-success);
-            color: var(--color-success);
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    
-/* --- UI Polish --- */
-.preset-buttons{gap:10px;}
-.preset-btn{display:flex; flex-direction:column; padding:12px 14px; border-radius:14px;}
-#offResults .preset-btn{background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);}
-#offResults .preset-btn:hover{transform:translateY(-1px);}
-#offPortionGroup button{width:100%;}
-
-</style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🌙 Night Shift Calorie Tracker</h1>
-            <p class="subtitle">Optimized for your gym routine & night shift lifestyle</p>
-        </header>
-
-        <div class="dashboard">
-            <!-- Daily Summary -->
-            <div class="card">
-                <div class="card-header">Today's Overview</div>
-                <div class="card-value" id="caloriesSummary">0</div>
-                <div class="card-subtext">calories consumed</div>
-                <div style="margin-top: 12px; font-size: 0.85em; color: var(--color-text-secondary);">
-                    Goal: <span id="dailyGoalDisplay">2000</span> | 
-                    <span id="remaining" style="color: var(--color-primary);">+2000 remaining</span>
-                </div>
-            </div>
-
-            <!-- Workout Summary -->
-            <div class="card">
-                <div class="card-header">Workouts Today</div>
-                <div class="card-value" id="caloriesBurned">0</div>
-                <div class="card-subtext">calories burned</div>
-                <div style="margin-top: 12px; font-size: 0.85em;">
-                    Sessions: <span id="workoutCount" style="color: var(--color-success);">0</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Navigation -->
-        <div class="tab-buttons">
-            <button class="tab-btn active" onclick="switchTab('add-food', this)">➕ Add Food</button>
-            <button class="tab-btn" onclick="switchTab('dashboard', this)">🏠 Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('workouts', this)">💪 Workouts</button>
-            <button class="tab-btn" onclick="switchTab('goals', this)">🎯 Goals & Settings</button>
-            <button class="tab-btn" onclick="switchTab('users', this)">👥 Users</button>
-            <button class="tab-btn" onclick="switchTab('history', this)">📊 History</button>
-        </div>
-
-        <!-- Add Food Tab -->
-        <div id="add-food" class="tab-content active">
-            <div class="card">
-                <div class="section-title">Log Food Entry</div>
-                
-                <div class="success-message" id="foodAddedMessage">✓ Food logged successfully!</div>
-
-                
-                <div class="section-title" style="margin-top:16px;">🔎 Search Packaged Food (Open Food Facts)</div>
-                <div class="input-group">
-                    <label for="offSearch">Search product</label>
-                    <input id="offSearch" type="text" placeholder="e.g., Amul milk, Maggi noodles, Oreo..." oninput="debouncedOFFSearch()"/>
-                    <div class="small-text">Tip: use brand + product name for best results.</div>
-                </div>
-
-                <div id="offResults" class="preset-buttons" style="display:flex; flex-direction:column; gap:8px;"></div>
-
-                <div class="input-group" id="offPortionGroup" style="display:none;">
-                    <label for="offPortion">Portion size (grams)</label>
-                    <input id="offPortion" type="number" min="1" value="100" oninput="updateOFFEstimate()"/>
-                    <div class="small-text" id="offEstimate">—</div>
-                    <button onclick="addOFFFood()">Add Selected Item</button>
-                </div>
-
-                <hr style="margin:18px 0; opacity:0.2;">
-<div class="input-group">
-                    <select id="foodSelect" onchange="updateFoodEstimate()" style="font-size: 1em; padding: 12px;">
-                        <optgroup label="🍞 Breads & Rice">
-                            <option value="roti">Roti (1 piece)</option>
-                            <option value="parantha">Parantha (1 piece)</option>
-                            <option value="naan">Naan (1 piece)</option>
-                            <option value="rice_plain">Plain Rice (1 bowl)</option>
-                            <option value="basmati_rice">Basmati Rice (1 cup)</option>
-                        </optgroup>
-                        <optgroup label="🥘 South Indian">
-                            <option value="dosa">Dosa (plain)</option>
-                            <option value="masala_dosa">Masala Dosa</option>
-                            <option value="idli">Idli (2 pieces)</option>
-                            <option value="uttapam">Uttapam (1 piece)</option>
-                            <option value="sambar_rice">Sambar Rice (1 bowl)</option>
-                            <option value="curd_rice">Curd Rice (1 bowl)</option>
-                        </optgroup>
-                        <optgroup label="🍗 Curries & Meat">
-                            <option value="paneer_curry">Paneer Curry (1 bowl)</option>
-                            <option value="butter_chicken">Butter Chicken (1 bowl)</option>
-                            <option value="tandoori_chicken">Tandoori Chicken (150g)</option>
-                            <option value="chicken_curry">Chicken Curry (1 bowl)</option>
-                            <option value="biryani_chicken">Chicken Biryani (1 plate)</option>
-                            <option value="dal_makhani">Dal Makhani (1 bowl)</option>
-                            <option value="fish_curry">Fish Curry (1 bowl)</option>
-                            <option value="egg_curry">Egg Curry (2 eggs)</option>
-                        </optgroup>
-                        <optgroup label="🥬 Vegetables & Sides">
-                            <option value="aloo_gobi">Aloo Gobi (1 bowl)</option>
-                            <option value="bindi_fry">Bindi Fry (1 bowl)</option>
-                            <option value="cauliflower_fry">Cauliflower Fry (1 bowl)</option>
-                            <option value="dal_tadka">Dal Tadka (1 bowl)</option>
-                            <option value="rajma">Rajma (1 bowl)</option>
-                        </optgroup>
-                        <optgroup label="🥟 Snacks">
-                            <option value="samosa">Samosa (1 piece)</option>
-                            <option value="pakora">Pakora (5 pieces)</option>
-                            <option value="chikhalwali">Chikhalwali (1 piece)</option>
-                            <option value="spring_roll">Spring Roll (1 piece)</option>
-                        </optgroup>
-                        <optgroup label="🍯 Sweets & Dairy">
-                            <option value="curd">Curd/Yogurt (1 cup)</option>
-                            <option value="paneer">Paneer (100g)</option>
-                            <option value="gulab_jamun">Gulab Jamun (2 pieces)</option>
-                            <option value="kheer">Kheer (1 bowl)</option>
-                        </optgroup>
-                        <optgroup label="🥛 Beverages">
-                            <option value="protein_shake">Protein Shake (250ml)</option>
-                            <option value="milk">Milk (1 cup)</option>
-                            <option value="coconut_water">Coconut Water (1 cup)</option>
-                            <option value="lassi">Lassi (1 glass)</option>
-                        </optgroup>
-                        <optgroup label="🍗 Proteins">
-                            <option value="boiled_eggs">Boiled Eggs (2 pieces)</option>
-                            <option value="scrambled_eggs">Scrambled Eggs (2 pieces)</option>
-                            <option value="chicken_breast">Grilled Chicken Breast (150g)</option>
-                        </optgroup>
-                        <optgroup label="🍌 Fruits">
-                            <option value="banana">Banana (1 medium)</option>
-                            <option value="apple">Apple (1 medium)</option>
-                            <option value="orange">Orange (1 medium)</option>
-                            <option value="mango">Mango (100g)</option>
-                        </optgroup>
-                        <optgroup label="🌍 International">
-                            <option value="pizza">Pizza (1 slice)</option>
-                            <option value="burger">Burger</option>
-                            <option value="pasta">Pasta (1 bowl)</option>
-                            <option value="salad">Salad (1 bowl)</option>
-                        </optgroup>
-                        <option value="custom">✏️ Custom Entry</option>
-                    </select>
-                </div>
-
-                <div id="portionControls" class="input-group" style="display: none;">
-                    <select id="portionSize" onchange="updateFoodEstimate()">
-                        <option value="">Select portion size...</option>
-                        <option value="0.5">½ serving (small)</option>
-                        <option value="1">1 serving (medium)</option>
-                        <option value="1.5">1.5 servings (large)</option>
-                        <option value="2">2 servings (extra large)</option>
-                    </select>
-                    <span id="calorieEstimate" style="padding: 12px; background: rgba(56, 189, 248, 0.15); border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.3); color: var(--color-primary); font-weight: 600; flex: 0 0 auto;">Est: 0 cal</span>
-                </div>
-
-                <div id="customFoodInput" style="display: none;">
-                    <div class="input-group">
-                        <input type="text" id="foodName" placeholder="Food name (e.g., Custom item)">
-                        <input type="number" id="foodCalories" placeholder="Calories" min="0">
-                    </div>
-                </div>
-
-                <div id="macroInputs" class="input-group">
-                    <input type="number" id="foodProtein" placeholder="Protein (g)" min="0" step="0.1">
-                    <input type="number" id="foodCarbs" placeholder="Carbs (g)" min="0" step="0.1">
-                    <input type="number" id="foodFat" placeholder="Fat (g)" min="0" step="0.1">
-                </div>
-
-                <button onclick="addFood()">Log Food</button>
-
-                <div class="preset-buttons">
-                    <strong style="width: 100%; color: var(--color-text-secondary); font-size: 0.85em; margin-bottom: 10px;">⚡ Most Popular (Quick Add):</strong>
-                    <button class="preset-btn" onclick="quickAddFood('Dosa', 250, 8, 48, 3)">🥘 Dosa</button>
-                    <button class="preset-btn" onclick="quickAddFood('Protein Shake', 150, 25, 3, 2)">🥛 Shake</button>
-                    <button class="preset-btn" onclick="quickAddFood('Boiled Eggs', 180, 18, 1, 10)">🥚 Eggs</button>
-                    <button class="preset-btn" onclick="quickAddFood('Chicken Biryani', 450, 18, 56, 14)">🍛 Biryani</button>
-                    <button class="preset-btn" onclick="quickAddFood('Tandoori Chicken', 260, 40, 2, 10)">🍗 Tandoori</button>
-                    <button class="preset-btn" onclick="quickAddFood('Paneer Curry', 320, 20, 12, 22)">🧀 Paneer</button>
-                    <button class="preset-btn" onclick="quickAddFood('Sambar Rice', 380, 10, 68, 4)">🍚 Sambar</button>
-                    <button class="preset-btn" onclick="quickAddFood('Milk', 150, 8, 12, 8)">🥛 Milk</button>
-                </div>
-
-                <div class="food-list">
-                    <strong style="color: var(--color-text-secondary); font-size: 0.85em;">Today's Foods:</strong>
-                    <div id="foodListContainer">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🍽️</div>
-                            <p>No foods logged yet. Start by adding your meals!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="macro-bar">
-                    <div class="macro-label">
-                        <span>Protein</span>
-                        <span><span id="totalProtein">0</span>g / <span id="proteinGoal">150</span>g</span>
-                    </div>
-                    <div class="macro-progress">
-                        <div class="macro-fill" id="proteinBar" style="width: 0%;"></div>
-                    </div>
-
-                    <div class="macro-label">
-                        <span>Carbs</span>
-                        <span><span id="totalCarbs">0</span>g / <span id="carbsGoal">250</span>g</span>
-                    </div>
-                    <div class="macro-progress">
-                        <div class="macro-fill" id="carbsBar" style="width: 0%; background: var(--color-warning);"></div>
-                    </div>
-
-                    <div class="macro-label">
-                        <span>Fat</span>
-                        <span><span id="totalFat">0</span>g / <span id="fatGoal">70</span>g</span>
-                    </div>
-                    <div class="macro-progress">
-                        <div class="macro-fill" id="fatBar" style="width: 0%; background: var(--color-accent);"></div>
-                    </div>
-                </div>
-
-                <div class="night-shift-tip">
-                    💡 <strong>Night Shift Tip:</strong> High-protein foods like dosa, paneer, and protein shakes are perfect post-workout at odd hours. Space meals every 3-4 hours to maintain energy.
-                </div>
-            </div>
-        </div>
-
-        <!-- Workouts Tab -->
+<script>
+    // -----------------------------
+    // Food Database
+    // -----------------------------
+    const foodDatabase = {
+        // Indian Breads & Rice
+        roti: { name: 'Roti (1 piece)', baseCals: 100, protein: 3, carbs: 18, fat: 1.5 },
+        parantha: { name: 'Parantha (1 piece)', baseCals: 150, protein: 5, carbs: 22, fat: 5 },
+        naan: { name: 'Naan (1 piece)', baseCals: 180, protein: 6, carbs: 28, fat: 6 },
+        rice_plain: { name: 'Plain Rice (1 bowl)', baseCals: 120, protein: 2.5, carbs: 28, fat: 0.3 },
+        basmati_rice: { name: 'Basmati Rice (1 cup)', baseCals: 190, protein: 4, carbs: 42, fat: 1.5 },
         
-        <div id="dashboard" class="tab-content">
-            <div class="card">
-                <div class="section-title">Dashboard</div>
-                <div class="small-text">A quick view of today's progress and your last 7 days trend.</div>
+        // South Indian
+        dosa: { name: 'Dosa (plain)', baseCals: 250, protein: 8, carbs: 48, fat: 3 },
+        masala_dosa: { name: 'Masala Dosa', baseCals: 320, protein: 9, carbs: 52, fat: 8 },
+        idli: { name: 'Idli (2 pieces)', baseCals: 100, protein: 2, carbs: 18, fat: 1 },
+        uttapam: { name: 'Uttapam (1 piece)', baseCals: 180, protein: 5, carbs: 32, fat: 3 },
+        sambar_rice: { name: 'Sambar Rice (1 bowl)', baseCals: 380, protein: 10, carbs: 68, fat: 4 },
+        curd_rice: { name: 'Curd Rice (1 bowl)', baseCals: 180, protein: 8, carbs: 28, fat: 3 },
+        
+        // Curries & Meat
+        paneer_curry: { name: 'Paneer Curry (1 bowl)', baseCals: 320, protein: 20, carbs: 12, fat: 22 },
+        butter_chicken: { name: 'Butter Chicken (1 bowl)', baseCals: 490, protein: 28, carbs: 15, fat: 35 },
+        tandoori_chicken: { name: 'Tandoori Chicken (150g)', baseCals: 260, protein: 40, carbs: 2, fat: 10 },
+        chicken_curry: { name: 'Chicken Curry (1 bowl)', baseCals: 225, protein: 30, carbs: 4, fat: 10 },
+        biryani_chicken: { name: 'Chicken Biryani (1 plate)', baseCals: 450, protein: 18, carbs: 56, fat: 14 },
+        dal_makhani: { name: 'Dal Makhani (1 bowl)', baseCals: 320, protein: 15, carbs: 30, fat: 14 },
+        fish_curry: { name: 'Fish Curry (1 bowl)', baseCals: 220, protein: 28, carbs: 5, fat: 10 },
+        egg_curry: { name: 'Egg Curry (2 eggs)', baseCals: 280, protein: 18, carbs: 8, fat: 20 },
+        
+        // Vegetables & Sides
+        aloo_gobi: { name: 'Aloo Gobi (1 bowl)', baseCals: 110, protein: 3, carbs: 18, fat: 3 },
+        bindi_fry: { name: 'Bindi Fry (1 bowl)', baseCals: 120, protein: 4, carbs: 15, fat: 4 },
+        cauliflower_fry: { name: 'Cauliflower Fry (1 bowl)', baseCals: 140, protein: 5, carbs: 12, fat: 6 },
+        dal_tadka: { name: 'Dal Tadka (1 bowl)', baseCals: 200, protein: 12, carbs: 28, fat: 4 },
+        rajma: { name: 'Rajma (1 bowl)', baseCals: 240, protein: 14, carbs: 36, fat: 3 },
+        
+        // Snacks
+        samosa: { name: 'Samosa (1 piece)', baseCals: 150, protein: 3, carbs: 18, fat: 7 },
+        pakora: { name: 'Pakora (5 pieces)', baseCals: 200, protein: 4, carbs: 22, fat: 10 },
+        chikhalwali: { name: 'Chikhalwali (1 piece)', baseCals: 180, protein: 5, carbs: 20, fat: 8 },
+        spring_roll: { name: 'Spring Roll (1 piece)', baseCals: 160, protein: 4, carbs: 18, fat: 7 },
+        
+        // Sweets & Dairy
+        curd: { name: 'Curd/Yogurt (1 cup)', baseCals: 100, protein: 10, carbs: 8, fat: 3.5 },
+        paneer: { name: 'Paneer (100g)', baseCals: 300, protein: 28, carbs: 3, fat: 22 },
+        gulab_jamun: { name: 'Gulab Jamun (2 pieces)', baseCals: 280, protein: 2, carbs: 42, fat: 11 },
+        kheer: { name: 'Kheer (1 bowl)', baseCals: 250, protein: 8, carbs: 35, fat: 8 },
+        
+        // Beverages & Supplements
+        protein_shake: { name: 'Protein Shake (250ml)', baseCals: 150, protein: 25, carbs: 3, fat: 2 },
+        milk: { name: 'Milk (1 cup)', baseCals: 150, protein: 8, carbs: 12, fat: 8 },
+        coconut_water: { name: 'Coconut Water (1 cup)', baseCals: 45, protein: 1.5, carbs: 9, fat: 0.5 },
+        lassi: { name: 'Lassi (1 glass)', baseCals: 180, protein: 8, carbs: 28, fat: 3 },
+        
+        // International
+        pizza: { name: 'Pizza (1 slice)', baseCals: 280, protein: 10, carbs: 32, fat: 12 },
+        burger: { name: 'Burger', baseCals: 350, protein: 15, carbs: 35, fat: 16 },
+        pasta: { name: 'Pasta (1 bowl)', baseCals: 240, protein: 8, carbs: 42, fat: 4 },
+        salad: { name: 'Salad (1 bowl)', baseCals: 100, protein: 4, carbs: 12, fat: 4 },
+        
+        // Eggs & Proteins
+        boiled_eggs: { name: 'Boiled Eggs (2 pieces)', baseCals: 180, protein: 18, carbs: 1, fat: 10 },
+        scrambled_eggs: { name: 'Scrambled Eggs (2 pieces)', baseCals: 200, protein: 18, carbs: 2, fat: 12 },
+        chicken_breast: { name: 'Grilled Chicken Breast (150g)', baseCals: 210, protein: 42, carbs: 0, fat: 4 },
+        
+        // Fruits
+        banana: { name: 'Banana (1 medium)', baseCals: 105, protein: 1.3, carbs: 27, fat: 0.3 },
+        apple: { name: 'Apple (1 medium)', baseCals: 95, protein: 0.5, carbs: 25, fat: 0.3 },
+        orange: { name: 'Orange (1 medium)', baseCals: 85, protein: 1.7, carbs: 21, fat: 0.2 },
+        mango: { name: 'Mango (100g)', baseCals: 60, protein: 0.8, carbs: 15, fat: 0.4 }
+    };
 
-                <div class="summary-grid" style="margin-top:14px;">
-                    <div class="summary-item">
-                        <div class="summary-value" id="dashTodayCalories">0</div>
-                        <div class="summary-label">Today's Calories</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" id="dashNetCalories">0</div>
-                        <div class="summary-label">Net (Food - Workouts)</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" id="dashGoalCalories">0</div>
-                        <div class="summary-label">Goal</div>
-                    </div>
-                </div>
+    // -----------------------------
+    // Data Structures
+    // -----------------------------
+    let users = [];
+    let currentUserId = null;
 
-                <div class="section-title" style="margin-top:18px;">Last 7 Days (Calories)</div>
-                <div id="dash7Days" class="small-text" style="margin-top:10px; line-height:1.6;"></div>
-            </div>
-        </div>
+    let todayData = {
+        foods: [],
+        workouts: [],
+        dailyGoal: 2000,
+        proteinGoal: 150,
+        carbsGoal: 250,
+        fatGoal: 70
+    };
 
-<div id="workouts" class="tab-content">
-            <div class="card">
-                <div class="section-title">Log Workout Session</div>
+    // -----------------------------
+    // User Helpers
+    // -----------------------------
+    function getCurrentUser() {
+        return users.find(u => u.id === currentUserId) || users[0];
+    }
 
-                <div class="success-message" id="workoutAddedMessage">✓ Workout logged successfully!</div>
+    function syncCurrentUserData() {
+        const user = getCurrentUser();
+        if (!user) return;
+        todayData = {
+            foods: user.foods || [],
+            workouts: user.workouts || [],
+            dailyGoal: user.dailyGoal || 2200,
+            proteinGoal: user.proteinGoal || 150,
+            carbsGoal: user.carbsGoal || 250,
+            fatGoal: user.fatGoal || 70
+        };
+    }
 
-                <div class="input-group">
-                    <input type="text" id="workoutName" placeholder="Exercise name (e.g., Chest Day, Running)">
-                    <input type="number" id="workoutDuration" placeholder="Duration (minutes)" min="1">
-                </div>
+    function saveCurrentUserData() {
+        const user = getCurrentUser();
+        if (!user) return;
+        user.foods = todayData.foods;
+        user.workouts = todayData.workouts;
+        user.dailyGoal = todayData.dailyGoal;
+        user.proteinGoal = todayData.proteinGoal;
+        user.carbsGoal = todayData.carbsGoal;
+        user.fatGoal = todayData.fatGoal;
+    }
 
-                <div class="input-group">
-                    <input type="number" id="workoutCalories" placeholder="Calories burned" min="0">
-                    <select id="workoutIntensity">
-                        <option value="low">Low Intensity</option>
-                        <option value="moderate" selected>Moderate Intensity</option>
-                        <option value="high">High Intensity</option>
-                    </select>
-                </div>
+    function switchUser(userId) {
+        currentUserId = userId;
+        syncCurrentUserData();
+        updateDisplay();
+        updateUsersList();
+    }
 
-                <button onclick="addWorkout()">Log Workout</button>
+    // -----------------------------
+    // BMR / TDEE
+    // -----------------------------
+    function calculateBMR(weight, height, age, gender) {
+        if (gender === 'male') {
+            return 10 * weight + 6.25 * height - 5 * age + 5;
+        } else {
+            return 10 * weight + 6.25 * height - 5 * age - 161;
+        }
+    }
 
-                <div class="preset-buttons">
-                    <strong style="width: 100%; color: var(--color-text-secondary); font-size: 0.85em; margin-bottom: 10px;">Quick Log (Gym Sessions):</strong>
-                    <button class="preset-btn" onclick="quickAddWorkout('Chest & Triceps', 60, 350, 'high')">Chest Day (60 min)</button>
-                    <button class="preset-btn" onclick="quickAddWorkout('Back & Biceps', 60, 320, 'high')">Back Day (60 min)</button>
-                    <button class="preset-btn" onclick="quickAddWorkout('Legs', 75, 400, 'high')">Leg Day (75 min)</button>
-                    <button class="preset-btn" onclick="quickAddWorkout('Cardio', 30, 280, 'moderate')">Cardio (30 min)</button>
-                    <button class="preset-btn" onclick="quickAddWorkout('Full Body', 90, 450, 'high')">Full Body (90 min)</button>
-                </div>
+    function calculateTDEE(bmr, activityLevel) {
+        const activityMultipliers = {
+            sedentary: 1.2,
+            light: 1.375,
+            moderate: 1.55,
+            active: 1.725,
+            very_active: 1.9
+        };
+        return bmr * (activityMultipliers[activityLevel] || 1.55);
+    }
 
-                <div class="workout-list">
-                    <strong style="color: var(--color-text-secondary); font-size: 0.85em;">Today's Workouts:</strong>
-                    <div id="workoutListContainer">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">💪</div>
-                            <p>No workouts logged yet. Great job planning your gym session!</p>
-                        </div>
-                    </div>
-                </div>
+    function getActivityMultiplier(activityLevel) {
+        const multipliers = {
+            sedentary: 1.2,
+            light: 1.375,
+            moderate: 1.55,
+            active: 1.725,
+            very_active: 1.9
+        };
+        return multipliers[activityLevel] || 1.55;
+    }
 
-                <div class="night-shift-tip">
-                    💡 <strong>Night Shift Tip:</strong> You're doing 5-6 days/week—excellent! Log your gym sessions right after to capture accurate calorie burn. Post-workout is the best time for high-protein meals.
-                </div>
-            </div>
-        </div>
+    // -----------------------------
+    // Add New User
+    // -----------------------------
+    function addNewUser() {
+        const name = document.getElementById('userName').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
+        const height = parseFloat(document.getElementById('userHeight').value);
+        const weight = parseFloat(document.getElementById('userWeight').value);
+        const gender = document.getElementById('userGender').value;
+        const age = parseFloat(document.getElementById('userAge').value);
+        const wakeTime = document.getElementById('userWakeTime').value;
+        const sleepTime = document.getElementById('userSleepTime').value;
+        const activityLevel = document.getElementById('userActivity').value;
 
-        <!-- Users Tab -->
-        <div id="users" class="tab-content">
-            <div class="card">
-                <div class="section-title">User Profiles</div>
+        if (!name || !height || !weight || !gender || !age || !wakeTime || !sleepTime || !activityLevel) {
+            alert('Please fill in all required fields');
+            return;
+        }
 
-                <div id="usersList" style="margin-bottom: 25px;">
-                    <strong style="color: var(--color-text-secondary); font-size: 0.85em; display: block; margin-bottom: 15px;">Active Users:</strong>
-                    <div id="usersContainer"></div>
-                </div>
+        const bmr = calculateBMR(weight, height, age, gender);
+        const activityMultiplier = getActivityMultiplier(activityLevel);
+        const dailyGoal = Math.round(bmr * activityMultiplier);
 
-                <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px;">
-                    <div class="section-title" style="margin-top: 0;">Add New User</div>
+        const proteinGoal = Math.round(weight * 1.8);
+        const carbsGoal = Math.round((dailyGoal * 0.45) / 4);
+        const fatGoal = Math.round((dailyGoal * 0.25) / 9);
 
-                    <div class="input-group">
-                        <input type="text" id="userName" placeholder="Name (e.g., John, Sarah)">
-                        <input type="text" id="userEmail" placeholder="Email (optional)">
-                    </div>
-
-                    <div class="input-group">
-                        <input type="number" id="userHeight" placeholder="Height (cm)" min="100" max="250">
-                        <input type="number" id="userWeight" placeholder="Weight (kg)" min="30" max="200">
-                    </div>
-
-                    <div class="input-group">
-                        <select id="userGender">
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <input type="number" id="userAge" placeholder="Age" min="13" max="100">
-                    </div>
-
-                    <div class="input-group">
-                        <input type="time" id="userWakeTime" placeholder="Wake up time">
-                        <input type="time" id="userSleepTime" placeholder="Sleep time">
-                    </div>
-
-                    <div class="input-group">
-                        <select id="userActivity">
-                            <option value="">Select Activity Level</option>
-                            <option value="sedentary">Sedentary (Little exercise)</option>
-                            <option value="light">Light (1-3 days/week)</option>
-                            <option value="moderate">Moderate (3-5 days/week)</option>
-                            <option value="active">Active (5-6 days/week)</option>
-                            <option value="very_active">Very Active (6-7 days/week)</option>
-                        </select>
-                    </div>
-
-                    <button onclick="addNewUser()" style="width: 100%; margin-bottom: 15px;">Create User Profile</button>
-
-                    <div class="night-shift-tip">
-                        💡 <strong>Multi-User Tracking:</strong> Create profiles for you and your friends. Each person's calories and macros are tracked separately. Perfect for gym buddies keeping each other accountable!
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Goals & Settings Tab -->
-        <div id="goals" class="tab-content">
-            <div class="card">
-                <div class="section-title">Customize Your Goals</div>
-
-                <div class="goal-input">
-                    <label style="display: block; margin-bottom: 8px; color: var(--color-text-secondary); font-size: 0.85em;">Daily Calorie Goal</label>
-                    <div class="input-group">
-                        <input type="number" id="calorieGoal" placeholder="2000" min="1000" max="5000">
-                        <button onclick="updateGoal()" style="flex: 0 0 auto;">Update</button>
-                    </div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat">
-                        <div class="stat-label">Protein Goal</div>
-                        <div class="stat-value" id="proteinGoalDisplay">150g</div>
-                        <input type="number" id="proteinGoalInput" value="150" min="50" max="300" style="width: 80%; margin-top: 8px; padding: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; color: var(--color-text-primary);">
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Carbs Goal</div>
-                        <div class="stat-value" id="carbsGoalDisplay">250g</div>
-                        <input type="number" id="carbsGoalInput" value="250" min="100" max="500" style="width: 80%; margin-top: 8px; padding: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; color: var(--color-text-primary);">
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Fat Goal</div>
-                        <div class="stat-value" id="fatGoalDisplay">70g</div>
-                        <input type="number" id="fatGoalInput" value="70" min="30" max="150" style="width: 80%; margin-top: 8px; padding: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; color: var(--color-text-primary);">
-                    </div>
-                </div>
-
-                <button onclick="updateMacros()" style="margin-top: 15px;">Update Macro Goals</button>
-
-                <div class="preset-buttons" style="margin-top: 25px;">
-                    <strong style="width: 100%; color: var(--color-text-secondary); font-size: 0.85em; margin-bottom: 10px;">Preset Goals:</strong>
-                    <button class="preset-btn" onclick="setPreset('cut')">Cutting (Deficit)</button>
-                    <button class="preset-btn" onclick="setPreset('maintain')">Maintenance</button>
-                    <button class="preset-btn" onclick="setPreset('bulk')">Bulking (Surplus)</button>
-                </div>
-
-                <div class="night-shift-tip" style="margin-top: 25px;">
-                    💡 <strong>Recommendation for you:</strong> With 5-6 gym days/week, aim for 1.8-2.2g protein per kg body weight. For night shifts, eat 5-6 smaller meals instead of 3 large ones to maintain steady energy.
-                </div>
-
-                <button class="reset-btn" onclick="resetAllData()">🔄 Reset All Data (Start Fresh)</button>
-            </div>
-        </div>
-
-        <!-- History Tab -->
-        <div id="history" class="tab-content">
-            <div class="card">
-                <div class="section-title">Today's Summary</div>
-
-                <div class="stats-grid">
-                    <div class="stat">
-                        <div class="stat-label">Total Consumed</div>
-                        <div class="stat-value" id="historyCalories">0</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Total Burned</div>
-                        <div class="stat-value" id="historyBurned">0</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Net Calories</div>
-                        <div class="stat-value" id="historyNet">0</div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 25px;">
-                    <strong style="color: var(--color-text-secondary); font-size: 0.85em; display: block; margin-bottom: 15px;">MACRO BREAKDOWN:</strong>
-                    
-                    <div style="background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9em;">
-                            <span>Protein</span>
-                            <span><span id="historyProtein">0</span>g</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9em;">
-                            <span>Carbs</span>
-                            <span><span id="historyCarbs">0</span>g</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-                            <span>Fat</span>
-                            <span><span id="historyFat">0</span>g</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="night-shift-tip" style="margin-top: 25px;">
-                    💡 <strong>Daily Insight:</strong> Review this summary each morning before sleep. Adjust tomorrow's meals if you're consistently under/over your goal. Night shift makes timing flexible—use that to your advantage!
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Comprehensive Food Database with calories and macros per standard serving
-        const foodDatabase = {
-            // Indian Breads & Rice
-            roti: { name: 'Roti (1 piece)', baseCals: 100, protein: 3, carbs: 18, fat: 1.5 },
-            parantha: { name: 'Parantha (1 piece)', baseCals: 150, protein: 5, carbs: 22, fat: 5 },
-            naan: { name: 'Naan (1 piece)', baseCals: 180, protein: 6, carbs: 28, fat: 6 },
-            rice_plain: { name: 'Plain Rice (1 bowl)', baseCals: 120, protein: 2.5, carbs: 28, fat: 0.3 },
-            basmati_rice: { name: 'Basmati Rice (1 cup)', baseCals: 190, protein: 4, carbs: 42, fat: 1.5 },
-            
-            // South Indian
-            dosa: { name: 'Dosa (plain)', baseCals: 250, protein: 8, carbs: 48, fat: 3 },
-            masala_dosa: { name: 'Masala Dosa', baseCals: 320, protein: 9, carbs: 52, fat: 8 },
-            idli: { name: 'Idli (2 pieces)', baseCals: 100, protein: 2, carbs: 18, fat: 1 },
-            uttapam: { name: 'Uttapam (1 piece)', baseCals: 180, protein: 5, carbs: 32, fat: 3 },
-            sambar_rice: { name: 'Sambar Rice (1 bowl)', baseCals: 380, protein: 10, carbs: 68, fat: 4 },
-            curd_rice: { name: 'Curd Rice (1 bowl)', baseCals: 180, protein: 8, carbs: 28, fat: 3 },
-            
-            // Curries & Meat
-            paneer_curry: { name: 'Paneer Curry (1 bowl)', baseCals: 320, protein: 20, carbs: 12, fat: 22 },
-            butter_chicken: { name: 'Butter Chicken (1 bowl)', baseCals: 490, protein: 28, carbs: 15, fat: 35 },
-            tandoori_chicken: { name: 'Tandoori Chicken (150g)', baseCals: 260, protein: 40, carbs: 2, fat: 10 },
-            chicken_curry: { name: 'Chicken Curry (1 bowl)', baseCals: 225, protein: 30, carbs: 4, fat: 10 },
-            biryani_chicken: { name: 'Chicken Biryani (1 plate)', baseCals: 450, protein: 18, carbs: 56, fat: 14 },
-            dal_makhani: { name: 'Dal Makhani (1 bowl)', baseCals: 320, protein: 15, carbs: 30, fat: 14 },
-            fish_curry: { name: 'Fish Curry (1 bowl)', baseCals: 220, protein: 28, carbs: 5, fat: 10 },
-            egg_curry: { name: 'Egg Curry (2 eggs)', baseCals: 280, protein: 18, carbs: 8, fat: 20 },
-            
-            // Vegetables & Sides
-            aloo_gobi: { name: 'Aloo Gobi (1 bowl)', baseCals: 110, protein: 3, carbs: 18, fat: 3 },
-            bindi_fry: { name: 'Bindi Fry (1 bowl)', baseCals: 120, protein: 4, carbs: 15, fat: 4 },
-            cauliflower_fry: { name: 'Cauliflower Fry (1 bowl)', baseCals: 140, protein: 5, carbs: 12, fat: 6 },
-            dal_tadka: { name: 'Dal Tadka (1 bowl)', baseCals: 200, protein: 12, carbs: 28, fat: 4 },
-            rajma: { name: 'Rajma (1 bowl)', baseCals: 240, protein: 14, carbs: 36, fat: 3 },
-            
-            // Snacks
-            samosa: { name: 'Samosa (1 piece)', baseCals: 150, protein: 3, carbs: 18, fat: 7 },
-            pakora: { name: 'Pakora (5 pieces)', baseCals: 200, protein: 4, carbs: 22, fat: 10 },
-            chikhalwali: { name: 'Chikhalwali (1 piece)', baseCals: 180, protein: 5, carbs: 20, fat: 8 },
-            spring_roll: { name: 'Spring Roll (1 piece)', baseCals: 160, protein: 4, carbs: 18, fat: 7 },
-            
-            // Sweets & Dairy
-            curd: { name: 'Curd/Yogurt (1 cup)', baseCals: 100, protein: 10, carbs: 8, fat: 3.5 },
-            paneer: { name: 'Paneer (100g)', baseCals: 300, protein: 28, carbs: 3, fat: 22 },
-            gulab_jamun: { name: 'Gulab Jamun (2 pieces)', baseCals: 280, protein: 2, carbs: 42, fat: 11 },
-            kheer: { name: 'Kheer (1 bowl)', baseCals: 250, protein: 8, carbs: 35, fat: 8 },
-            
-            // Beverages & Supplements
-            protein_shake: { name: 'Protein Shake (250ml)', baseCals: 150, protein: 25, carbs: 3, fat: 2 },
-            milk: { name: 'Milk (1 cup)', baseCals: 150, protein: 8, carbs: 12, fat: 8 },
-            coconut_water: { name: 'Coconut Water (1 cup)', baseCals: 45, protein: 1.5, carbs: 9, fat: 0.5 },
-            lassi: { name: 'Lassi (1 glass)', baseCals: 180, protein: 8, carbs: 28, fat: 3 },
-            
-            // International
-            pizza: { name: 'Pizza (1 slice)', baseCals: 280, protein: 10, carbs: 32, fat: 12 },
-            burger: { name: 'Burger', baseCals: 350, protein: 15, carbs: 35, fat: 16 },
-            pasta: { name: 'Pasta (1 bowl)', baseCals: 240, protein: 8, carbs: 42, fat: 4 },
-            salad: { name: 'Salad (1 bowl)', baseCals: 100, protein: 4, carbs: 12, fat: 4 },
-            
-            // Eggs & Proteins
-            boiled_eggs: { name: 'Boiled Eggs (2 pieces)', baseCals: 180, protein: 18, carbs: 1, fat: 10 },
-            scrambled_eggs: { name: 'Scrambled Eggs (2 pieces)', baseCals: 200, protein: 18, carbs: 2, fat: 12 },
-            chicken_breast: { name: 'Grilled Chicken Breast (150g)', baseCals: 210, protein: 42, carbs: 0, fat: 4 },
-            
-            // Fruits
-            banana: { name: 'Banana (1 medium)', baseCals: 105, protein: 1.3, carbs: 27, fat: 0.3 },
-            apple: { name: 'Apple (1 medium)', baseCals: 95, protein: 0.5, carbs: 25, fat: 0.3 },
-            orange: { name: 'Orange (1 medium)', baseCals: 85, protein: 1.7, carbs: 21, fat: 0.2 },
-            mango: { name: 'Mango (100g)', baseCals: 60, protein: 0.8, carbs: 15, fat: 0.4 }
+        const newUser = {
+            id: Date.now(),
+            name,
+            email,
+            height,
+            weight,
+            gender,
+            age,
+            wakeTime,
+            sleepTime,
+            activityLevel,
+            createdDate: new Date().toLocaleDateString(),
+            dailyGoal,
+            proteinGoal,
+            carbsGoal,
+            fatGoal,
+            foods: [],
+            workouts: []
         };
 
-        // Data Storage (using variables instead of localStorage for sandbox safety)
-        let users = [];
-        let currentUserId = null;
-        
-        
-        // -----------------------------
-        // Persistence (localStorage)
-        // -----------------------------
-        const APP_STORAGE_KEY = 'nightShiftCalorieTracker_v1';
+        users.push(newUser);
+        currentUserId = newUser.id;
+        syncCurrentUserData();
 
-        function saveAppData() {
-            try {
-                localStorage.setItem(APP_STORAGE_KEY, JSON.stringify({ users, currentUserId }));
-            } catch (e) {
-                console.warn('Unable to save app data', e);
-            }
+        // Clear form
+        document.getElementById('userName').value = '';
+        document.getElementById('userEmail').value = '';
+        document.getElementById('userHeight').value = '';
+        document.getElementById('userWeight').value = '';
+        document.getElementById('userGender').value = '';
+        document.getElementById('userAge').value = '';
+        document.getElementById('userWakeTime').value = '';
+        document.getElementById('userSleepTime').value = '';
+        document.getElementById('userActivity').value = '';
+
+        updateDisplay();
+        updateUsersList();
+        switchTab('add-food');
+    }
+
+    function deleteUser(userId) {
+        if (!confirm('Delete this user profile?')) return;
+        if (users.length <= 1) {
+            alert('Cannot delete the only user');
+            return;
+        }
+        users = users.filter(u => u.id !== userId);
+        if (currentUserId === userId && users.length > 0) {
+            currentUserId = users[0].id;
+            syncCurrentUserData();
+        }
+        updateUsersList();
+        updateDisplay();
+    }
+
+    function updateUsersList() {
+        const container = document.getElementById('usersContainer');
+        if (!container) return;
+
+        if (users.length === 0) {
+            container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.9em;">No users yet. Create a profile to get started!</p>';
+            return;
         }
 
-        function loadAppData() {
-            try {
-                const raw = localStorage.getItem(APP_STORAGE_KEY);
-                if (!raw) return false;
-                const parsed = JSON.parse(raw);
-                if (!parsed || !Array.isArray(parsed.users)) return false;
-                users = parsed.users;
-                currentUserId = parsed.currentUserId ?? (users[0]?.id ?? null);
-                return true;
-            } catch (e) {
-                console.warn('Unable to load app data', e);
-                return false;
-            }
+        container.innerHTML = users.map(user => `
+            <div style="background: ${currentUserId === user.id ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${currentUserId === user.id ? 'rgba(56, 189, 248, 0.5)' : 'rgba(255, 255, 255, 0.1)'}; padding: 15px; margin-bottom: 12px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="switchUser(${user.id})">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 6px; font-size: 1.1em;">${user.name}</div>
+                        <div style="font-size: 0.8em; color: var(--color-text-secondary); margin-bottom: 8px;">
+                            📊 ${user.height}cm • ${user.weight}kg | 🎂 Age ${user.age} (${user.gender || 'N/A'})
+                        </div>
+                        <div style="font-size: 0.8em; color: var(--color-text-secondary); margin-bottom: 8px;">
+                            ⏰ Wake: ${user.wakeTime} | 😴 Sleep: ${user.sleepTime}
+                        </div>
+                        <div style="font-size: 0.8em; color: var(--color-text-secondary); margin-bottom: 8px;">
+                            💪 Activity: ${user.activityLevel.replace('_', ' ')} | 🎯 Daily Goal: ${user.dailyGoal} cal
+                        </div>
+                        <div style="font-size: 0.75em; color: var(--color-text-secondary);">
+                            Created: ${user.createdDate}
+                        </div>
+                    </div>
+                    <button class="btn-small btn-danger" onclick="event.stopPropagation(); deleteUser(${user.id})" style="flex: 0 0 auto; margin-left: 10px;">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // -----------------------------
+    // Food Handling
+    // -----------------------------
+    function updateFoodEstimate() {
+        const foodSelect = document.getElementById('foodSelect').value;
+        const portionSize = parseFloat(document.getElementById('portionSize').value) || 1;
+        const portionControls = document.getElementById('portionControls');
+        const customFoodInput = document.getElementById('customFoodInput');
+        const macroInputs = document.getElementById('macroInputs');
+
+        if (foodSelect === 'custom') {
+            portionControls.style.display = 'none';
+            customFoodInput.style.display = 'block';
+            macroInputs.style.display = 'flex';
+            document.getElementById('calorieEstimate').textContent = 'Est: 0 cal';
+            return;
         }
 
-let todayData = {
+        if (!foodSelect) {
+            portionControls.style.display = 'none';
+            customFoodInput.style.display = 'none';
+            macroInputs.style.display = 'none';
+            document.getElementById('calorieEstimate').textContent = 'Est: 0 cal';
+            return;
+        }
+
+        const food = foodDatabase[foodSelect];
+        if (!food) return;
+
+        portionControls.style.display = 'flex';
+        customFoodInput.style.display = 'none';
+        macroInputs.style.display = 'none';
+
+        const estimatedCals = Math.round(food.baseCals * portionSize);
+        document.getElementById('calorieEstimate').textContent = `Est: ${estimatedCals} cal`;
+    }
+
+    function addFood() {
+        const foodSelect = document.getElementById('foodSelect').value;
+        let name, calories, protein, carbs, fat;
+
+        if (foodSelect === 'custom' || !foodSelect) {
+            name = document.getElementById('foodName').value.trim();
+            calories = parseFloat(document.getElementById('foodCalories').value);
+            protein = parseFloat(document.getElementById('foodProtein').value) || 0;
+            carbs = parseFloat(document.getElementById('foodCarbs').value) || 0;
+            fat = parseFloat(document.getElementById('foodFat').value) || 0;
+
+            if (!name || isNaN(calories) || calories <= 0) {
+                alert('Please enter food name and calories');
+                return;
+            }
+        } else {
+            const portionSize = document.getElementById('portionSize').value;
+            if (!portionSize) {
+                alert('Please select a portion size');
+                return;
+            }
+            const food = foodDatabase[foodSelect];
+            const multiplier = parseFloat(portionSize);
+            name = food.name;
+            calories = Math.round(food.baseCals * multiplier);
+            protein = Math.round(food.protein * multiplier * 10) / 10;
+            carbs = Math.round(food.carbs * multiplier * 10) / 10;
+            fat = Math.round(food.fat * multiplier * 10) / 10;
+        }
+
+        const foodEntry = {
+            id: Date.now(),
+            name,
+            calories,
+            protein,
+            carbs,
+            fat,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        todayData.foods.push(foodEntry);
+        saveCurrentUserData();
+
+        showSuccessMessage('foodAddedMessage');
+
+        document.getElementById('foodSelect').value = '';
+        document.getElementById('portionSize').value = '';
+        document.getElementById('foodName').value = '';
+        document.getElementById('foodCalories').value = '';
+        document.getElementById('foodProtein').value = '';
+        document.getElementById('foodCarbs').value = '';
+        document.getElementById('foodFat').value = '';
+        document.getElementById('portionControls').style.display = 'none';
+        document.getElementById('customFoodInput').style.display = 'none';
+        document.getElementById('macroInputs').style.display = 'flex';
+
+        updateDisplay();
+    }
+
+    function quickAddFood(name, calories, protein, carbs, fat) {
+        const foodEntry = {
+            id: Date.now(),
+            name,
+            calories,
+            protein,
+            carbs,
+            fat,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+        todayData.foods.push(foodEntry);
+        saveCurrentUserData();
+        showSuccessMessage('foodAddedMessage');
+        updateDisplay();
+    }
+
+    function removeFood(id) {
+        todayData.foods = todayData.foods.filter(f => f.id !== id);
+        saveCurrentUserData();
+        updateDisplay();
+    }
+
+    // -----------------------------
+    // Workout Handling
+    // -----------------------------
+    function addWorkout() {
+        const name = document.getElementById('workoutName').value.trim();
+        const duration = parseFloat(document.getElementById('workoutDuration').value);
+        const calories = parseFloat(document.getElementById('workoutCalories').value);
+        const intensity = document.getElementById('workoutIntensity').value;
+
+        if (!name || isNaN(duration) || isNaN(calories) || calories <= 0) {
+            alert('Please fill in all workout fields');
+            return;
+        }
+
+        const workoutEntry = {
+            id: Date.now(),
+            name,
+            duration,
+            calories: Math.round(calories),
+            intensity,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        todayData.workouts.push(workoutEntry);
+        saveCurrentUserData();
+        showSuccessMessage('workoutAddedMessage');
+
+        document.getElementById('workoutName').value = '';
+        document.getElementById('workoutDuration').value = '';
+        document.getElementById('workoutCalories').value = '';
+        document.getElementById('workoutIntensity').value = 'moderate';
+
+        updateDisplay();
+    }
+
+    function quickAddWorkout(name, duration, calories, intensity) {
+        const workoutEntry = {
+            id: Date.now(),
+            name,
+            duration,
+            calories: Math.round(calories),
+            intensity,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+        todayData.workouts.push(workoutEntry);
+        saveCurrentUserData();
+        showSuccessMessage('workoutAddedMessage');
+        updateDisplay();
+    }
+
+    function removeWorkout(id) {
+        todayData.workouts = todayData.workouts.filter(w => w.id !== id);
+        saveCurrentUserData();
+        updateDisplay();
+    }
+
+    // -----------------------------
+    // Goals & Presets
+    // -----------------------------
+    function updateGoal() {
+        const newGoal = parseFloat(document.getElementById('calorieGoal').value);
+        if (isNaN(newGoal) || newGoal < 1000) {
+            alert('Please enter a valid calorie goal');
+            return;
+        }
+        todayData.dailyGoal = newGoal;
+        saveCurrentUserData();
+        updateDisplay();
+    }
+
+    function updateMacros() {
+        const protein = parseFloat(document.getElementById('proteinGoalInput').value);
+        const carbs = parseFloat(document.getElementById('carbsGoalInput').value);
+        const fat = parseFloat(document.getElementById('fatGoalInput').value);
+
+        if (isNaN(protein) || isNaN(carbs) || isNaN(fat)) {
+            alert('Please enter valid macro goals');
+            return;
+        }
+
+        todayData.proteinGoal = protein;
+        todayData.carbsGoal = carbs;
+        todayData.fatGoal = fat;
+        saveCurrentUserData();
+        updateDisplay();
+    }
+
+    function setPreset(preset) {
+        const user = getCurrentUser();
+        if (!user) return;
+
+        const baseCalories = calculateTDEE(
+            calculateBMR(user.weight, user.height, user.age, user.gender),
+            user.activityLevel
+        );
+
+        if (preset === 'cut') {
+            todayData.dailyGoal = Math.round(baseCalories * 0.85);
+            todayData.proteinGoal = Math.round(user.weight * 2.2);
+        } else if (preset === 'maintain') {
+            todayData.dailyGoal = Math.round(baseCalories);
+            todayData.proteinGoal = Math.round(user.weight * 1.8);
+        } else if (preset === 'bulk') {
+            todayData.dailyGoal = Math.round(baseCalories * 1.1);
+            todayData.proteinGoal = Math.round(user.weight * 2.0);
+        }
+
+        todayData.carbsGoal = Math.round((todayData.dailyGoal * 0.45) / 4);
+        todayData.fatGoal = Math.round((todayData.dailyGoal * 0.3) / 9);
+
+        saveCurrentUserData();
+        updateDisplay();
+    }
+
+    function resetAllData() {
+        if (!confirm('Are you sure you want to reset all data? This cannot be undone.')) return;
+        todayData = {
             foods: [],
             workouts: [],
             dailyGoal: 2000,
@@ -1072,1445 +514,200 @@ let todayData = {
             carbsGoal: 250,
             fatGoal: 70
         };
+        saveCurrentUserData();
+        updateDisplay();
+    }
 
-        // Initialize
-        window.addEventListener('DOMContentLoaded', () => {
-            // Create default user if none exists
-            if (!loaded || users.length === 0) {
-            if (users.length === 0) {
-                const defaultUser = {
-                    id: Date.now(),
-                    name: 'You',
-                    email: '',
-                    height: 175,
-                    weight: 75,
-                    gender: '',
-                    age: 25,
-                    wakeTime: '08:00',
-                    sleepTime: '23:00',
-                    activityLevel: 'active',
-                    createdDate: new Date().toLocaleDateString(),
-                    dailyGoal: 2200,
-                    proteinGoal: 150,
-                    carbsGoal: 250,
-                    fatGoal: 70,
-                    foods: [],
-                    workouts: []
-                };
-                users.push(defaultUser);
-            }
-            }
-            
-            if (currentUserId === null && users.length > 0) {
-                currentUserId = users[0].id;
-                syncCurrentUserData();
-            }
-            
-            updateDisplay();
-            updateUsersList();
-            saveAppData();
+    // -----------------------------
+    // Totals & Display
+    // -----------------------------
+    function calculateTotals() {
+        const totals = {
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            burned: 0
+        };
+
+        todayData.foods.forEach(food => {
+            totals.calories += food.calories || 0;
+            totals.protein += food.protein || 0;
+            totals.carbs += food.carbs || 0;
+            totals.fat += food.fat || 0;
         });
 
-        // Get current user
-        function getCurrentUser() {
-            return users.find(u => u.id === currentUserId) || users[0];
+        todayData.workouts.forEach(workout => {
+            totals.burned += workout.calories || 0;
+        });
+
+        return totals;
+    }
+
+    function updateFoodList() {
+        const container = document.getElementById('foodListContainer');
+        if (!container) return;
+
+        if (todayData.foods.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🍽️</div>
+                    <p>No foods logged yet. Start by adding your meals!</p>
+                </div>
+            `;
+            return;
         }
 
-        // Switch to user
-        function switchUser(userId) {
-            currentUserId = userId;
-            syncCurrentUserData();
-            updateDisplay();
+        container.innerHTML = todayData.foods.map(food => `
+            <div class="food-item">
+                <div class="food-details">
+                    <div class="food-name">${food.name}</div>
+                    <div class="food-calories">
+                        <span class="food-calories-value">${Math.round(food.calories)} cal</span> • 
+                        P: ${Math.round(food.protein)}g • C: ${Math.round(food.carbs)}g • F: ${Math.round(food.fat)}g • ${food.time}
+                    </div>
+                </div>
+                <button class="btn-small btn-danger" onclick="removeFood(${food.id})">Remove</button>
+            </div>
+        `).join('');
+    }
+
+    function updateWorkoutList() {
+        const container = document.getElementById('workoutListContainer');
+        if (!container) return;
+
+        if (todayData.workouts.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">💪</div>
+                    <p>No workouts logged yet. Great job planning your gym session!</p>
+                </div>
+            `;
+            return;
         }
 
-        // Sync data from current user
-        function syncCurrentUserData() {
-            const user = getCurrentUser();
-            todayData = {
-                foods: user.foods || [],
-                workouts: user.workouts || [],
-                dailyGoal: user.dailyGoal || 2200,
-                proteinGoal: user.proteinGoal || 150,
-                carbsGoal: user.carbsGoal || 250,
-                fatGoal: user.fatGoal || 70
-            };
+        container.innerHTML = todayData.workouts.map(workout => `
+            <div class="workout-item">
+                <div class="workout-details">
+                    <div class="workout-name">${workout.name}</div>
+                    <div class="workout-burned">
+                        ${workout.duration} min • ${Math.round(workout.calories)} cal burned (${workout.intensity}) • ${workout.time}
+                    </div>
+                </div>
+                <button class="btn-small btn-danger" onclick="removeWorkout(${workout.id})">Remove</button>
+            </div>
+        `).join('');
+    }
+
+    function updateDisplay() {
+        const totals = calculateTotals();
+        const netCalories = totals.calories - totals.burned;
+        const remaining = todayData.dailyGoal - totals.calories;
+
+        // Dashboard
+        document.getElementById('caloriesSummary').textContent = Math.round(totals.calories);
+        document.getElementById('dailyGoalDisplay').textContent = todayData.dailyGoal;
+        const remainingElement = document.getElementById('remaining');
+        remainingElement.textContent = `${remaining >= 0 ? '+' : ''}${remaining} remaining`;
+        remainingElement.style.color = remaining >= 0 ? 'var(--color-primary)' : 'var(--color-warning)';
+
+        document.getElementById('caloriesBurned').textContent = Math.round(totals.burned);
+        document.getElementById('workoutCount').textContent = todayData.workouts.length;
+
+        // Goals inputs
+        document.getElementById('calorieGoal').value = todayData.dailyGoal;
+        document.getElementById('proteinGoalDisplay').textContent = todayData.proteinGoal + 'g';
+        document.getElementById('carbsGoalDisplay').textContent = todayData.carbsGoal + 'g';
+        document.getElementById('fatGoalDisplay').textContent = todayData.fatGoal + 'g';
+        document.getElementById('proteinGoalInput').value = todayData.proteinGoal;
+        document.getElementById('carbsGoalInput').value = todayData.carbsGoal;
+        document.getElementById('fatGoalInput').value = todayData.fatGoal;
+
+        // Macros
+        document.getElementById('totalProtein').textContent = Math.round(totals.protein);
+        document.getElementById('totalCarbs').textContent = Math.round(totals.carbs);
+        document.getElementById('totalFat').textContent = Math.round(totals.fat);
+
+        const proteinPercent = todayData.proteinGoal ? Math.min((totals.protein / todayData.proteinGoal) * 100, 100) : 0;
+        const carbsPercent = todayData.carbsGoal ? Math.min((totals.carbs / todayData.carbsGoal) * 100, 100) : 0;
+        const fatPercent = todayData.fatGoal ? Math.min((totals.fat / todayData.fatGoal) * 100, 100) : 0;
+
+        document.getElementById('proteinBar').style.width = proteinPercent + '%';
+        document.getElementById('carbsBar').style.width = carbsPercent + '%';
+        document.getElementById('fatBar').style.width = fatPercent + '%';
+
+        // History tab
+        document.getElementById('historyCalories').textContent = Math.round(totals.calories);
+        document.getElementById('historyBurned').textContent = Math.round(totals.burned);
+        document.getElementById('historyNet').textContent = Math.round(netCalories);
+        document.getElementById('historyProtein').textContent = Math.round(totals.protein);
+        document.getElementById('historyCarbs').textContent = Math.round(totals.carbs);
+        document.getElementById('historyFat').textContent = Math.round(totals.fat);
+
+        // Lists
+        updateFoodList();
+        updateWorkoutList();
+    }
+
+    // -----------------------------
+    // Misc Helpers
+    // -----------------------------
+    function showSuccessMessage(elementId) {
+        const msg = document.getElementById(elementId);
+        if (!msg) return;
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 2000);
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        const tab = document.getElementById(tabName);
+        if (tab) tab.classList.add('active');
+
+        if (event && event.target) {
+            event.target.classList.add('active');
         }
+    }
 
-        // Save current user data
-        function saveCurrentUserData() {
-            const user = getCurrentUser();
-            if (user) {
-                user.foods = todayData.foods;
-                user.workouts = todayData.workouts;
-                user.dailyGoal = todayData.dailyGoal;
-                user.proteinGoal = todayData.proteinGoal;
-                user.carbsGoal = todayData.carbsGoal;
-                user.fatGoal = todayData.fatGoal;
-            }
-        }
-
-        // Add new user
-        function addNewUser() {
-            const name = document.getElementById('userName').value.trim();
-            const email = document.getElementById('userEmail').value.trim();
-            const height = parseFloat(document.getElementById('userHeight').value);
-            const weight = parseFloat(document.getElementById('userWeight').value);
-            const gender = document.getElementById('userGender').value;
-            const age = parseFloat(document.getElementById('userAge').value);
-            const wakeTime = document.getElementById('userWakeTime').value;
-            const sleepTime = document.getElementById('userSleepTime').value;
-            const activityLevel = document.getElementById('userActivity').value;
-
-            if (!name || !height || !weight || !gender || !age || !wakeTime || !sleepTime || !activityLevel) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            // Calculate calorie goal based on Mifflin-St Jeor equation
-            const bmr = calculateBMR(weight, height, age, gender);
-            const activityMultiplier = getActivityMultiplier(activityLevel);
-            const dailyGoal = Math.round(bmr * activityMultiplier);
-
-            // Macro targets based on activity level
-            let proteinGoal = Math.round(weight * 1.8); // 1.8g per kg for active individuals
-            let carbsGoal = Math.round((dailyGoal * 0.45) / 4);
-            let fatGoal = Math.round((dailyGoal * 0.25) / 9);
-
-            const newUser = {
+    // -----------------------------
+    // Init
+    // -----------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+        if (users.length === 0) {
+            const defaultUser = {
                 id: Date.now(),
-                name: name,
-                email: email,
-                height: height,
-                weight: weight,
-                gender: gender,
-                age: age,
-                wakeTime: wakeTime,
-                sleepTime: sleepTime,
-                activityLevel: activityLevel,
+                name: 'You',
+                email: '',
+                height: 175,
+                weight: 75,
+                gender: '',
+                age: 25,
+                wakeTime: '08:00',
+                sleepTime: '23:00',
+                activityLevel: 'active',
                 createdDate: new Date().toLocaleDateString(),
-                dailyGoal: dailyGoal,
-                proteinGoal: proteinGoal,
-                carbsGoal: carbsGoal,
-                fatGoal: fatGoal,
+                dailyGoal: 2200,
+                proteinGoal: 150,
+                carbsGoal: 250,
+                fatGoal: 70,
                 foods: [],
                 workouts: []
             };
+            users.push(defaultUser);
+        }
 
-            users.push(newUser);
-            currentUserId = newUser.id;
+        if (currentUserId === null && users.length > 0) {
+            currentUserId = users[0].id;
             syncCurrentUserData();
-            
-            // Clear form
-            document.getElementById('userName').value = '';
-            document.getElementById('userEmail').value = '';
-            document.getElementById('userHeight').value = '';
-            document.getElementById('userWeight').value = '';
-            document.getElementById('userGender').value = '';
-            document.getElementById('userAge').value = '';
-            document.getElementById('userWakeTime').value = '';
-            document.getElementById('userSleepTime').value = '';
-            document.getElementById('userActivity').value = '';
-            
-            updateDisplay();
-            updateUsersList();
-            saveAppData();
-            switchTab('add-food');
-                    saveAppData();
-}
-
-        // Calculate BMR using Mifflin-St Jeor equation
-        function calculateBMR(weight, height, age, gender) {
-            if (gender === 'male') {
-                return 10 * weight + 6.25 * height - 5 * age + 5;
-            } else {
-                return 10 * weight + 6.25 * height - 5 * age - 161;
-            }
         }
 
-        // Get activity multiplier based on activity level
-        function getActivityMultiplier(activityLevel) {
-            const multipliers = {
-                'sedentary': 1.2,
-                'light': 1.375,
-                'moderate': 1.55,
-                'active': 1.725,
-                'very_active': 1.9
-            };
-            return multipliers[activityLevel] || 1.55;
-
-</div>              return;
-            }
-
-            // Calculate recommended calories and macros based on user data
-            const bmr = calculateBMR(weight, height, age, gender);
-            const tdee = calculateTDEE(bmr, activityLevel);
-            
-            const newUser = {
-                id: Date.now(),
-                name,
-                email,
-                height,
-                weight,
-                gender,
-                age,
-                wakeTime,
-                sleepTime,
-                activityLevel,
-                createdDate: new Date().toLocaleDateString(),
-                dailyGoal: Math.round(tdee),
-                proteinGoal: Math.round(weight * 1.8),
-                carbsGoal: Math.round(tdee * 0.45 / 4),
-                fatGoal: Math.round(tdee * 0.3 / 9),
-                foods: [],
-                workouts: []
-            };
-
-            users.push(newUser);
-            currentUserId = newUser.id;
-            syncCurrentUserData();
-
-            // Clear inputs
-            document.getElementById('userName').value = '';
-            document.getElementById('userEmail').value = '';
-            document.getElementById('userHeight').value = '';
-            document.getElementById('userWeight').value = '';
-            document.getElementById('userGender').value = '';
-            document.getElementById('userAge').value = '';
-            document.getElementById('userWakeTime').value = '';
-            document.getElementById('userSleepTime').value = '';
-            document.getElementById('userActivity').value = '';
-
-            alert(`Profile created for ${name}! Recommended daily calories: ${Math.round(tdee)}`);
-            updateDisplay();
-            updateUsersList();
-            saveAppData();
-        }
-
-        // Calculate BMR (Basal Metabolic Rate) using Mifflin-St Jeor equation
-        function calculateBMR(weight, height, age, gender) {
-            if (gender === 'male') {
-                return 10 * weight + 6.25 * height - 5 * age + 5;
-            } else {
-                return 10 * weight + 6.25 * height - 5 * age - 161;
-            }
-        }
-
-        // Calculate TDEE (Total Daily Energy Expenditure)
-        function calculateTDEE(bmr, activityLevel) {
-            const activityMultipliers = {
-                sedentary: 1.2,
-                light: 1.375,
-                moderate: 1.55,
-                active: 1.725,
-                very_active: 1.9
-            };
-            return bmr * (activityMultipliers[activityLevel] || 1.55);
-        }
-
-        // Add food entry
-        function addFood() {
-            const foodSelect = document.getElementById('foodSelect');
-            const selectedValue = foodSelect.value;
-            
-            if (!selectedValue) {
-                alert('Please select a food');
-                return;
-            }
-
-            let calories, protein, carbs, fat, name;
-
-            if (selectedValue === 'custom') {
-                name = document.getElementById('foodName').value.trim();
-                calories = parseFloat(document.getElementById('foodCalories').value);
-                
-                if (!name || isNaN(calories)) {
-                    alert('Please enter food name and calories');
-                    return;
-                }
-            } else {
-                const food = foodDatabase[selectedValue];
-                if (!food) return;
-
-                const portionSize = parseFloat(document.getElementById('portionSize').value) || 1;
-                calories = food.baseCals * portionSize;
-                protein = food.protein * portionSize;
-                carbs = food.carbs * portionSize;
-                fat = food.fat * portionSize;
-                name = food.name;
-            }
-
-            // Get macro values for custom entry
-            if (selectedValue === 'custom') {
-                protein = parseFloat(document.getElementById('foodProtein').value) || 0;
-                carbs = parseFloat(document.getElementById('foodCarbs').value) || 0;
-                fat = parseFloat(document.getElementById('foodFat').value) || 0;
-            }
-
-            const foodEntry = {
-                id: Date.now(),
-                name,
-                calories: Math.round(calories),
-                protein: Math.round(protein * 10) / 10,
-                carbs: Math.round(carbs * 10) / 10,
-                fat: Math.round(fat * 10) / 10,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.foods.push(foodEntry);
-            saveCurrentUserData();
-
-            // Show success message
-            const message = document.getElementById('foodAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            // Reset form
-            document.getElementById('foodSelect').value = '';
-            document.getElementById('portionSize').value = '';
-            document.getElementById('foodName').value = '';
-            document.getElementById('foodCalories').value = '';
-            document.getElementById('foodProtein').value = '';
-            document.getElementById('foodCarbs').value = '';
-            document.getElementById('foodFat').value = '';
-            document.getElementById('macroInputs').style.display = 'none';
-            document.getElementById('customFoodInput').style.display = 'none';
-            document.getElementById('portionControls').style.display = 'none';
-
-            updateDisplay();
-        }
-
-        // Quick add food with predefined values
-        function quickAddFood(name, calories, protein, carbs, fat) {
-            const foodEntry = {
-                id: Date.now(),
-                name,
-                calories: Math.round(calories),
-                protein: Math.round(protein * 10) / 10,
-                carbs: Math.round(carbs * 10) / 10,
-                fat: Math.round(fat * 10) / 10,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.foods.push(foodEntry);
-            saveCurrentUserData();
-
-            // Show success message
-            const message = document.getElementById('foodAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            updateDisplay();
-        }
-
-        // Update food estimate based on portion size
-        function updateFoodEstimate() {
-            const foodSelect = document.getElementById('foodSelect');
-            const selectedValue = foodSelect.value;
-            const portionSize = parseFloat(document.getElementById('portionSize').value) || 1;
-
-            if (selectedValue && selectedValue !== 'custom') {
-                const food = foodDatabase[selectedValue];
-                if (food) {
-                    const estimatedCals = food.baseCals * portionSize;
-                    document.getElementById('calorieEstimate').textContent = `Est: ${Math.round(estimatedCals)} cal`;
-                }
-            }
-        }
-
-        // Handle food selection change
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load saved data (if any)
-            const loaded = loadAppData();
-
-            document.getElementById('foodSelect').addEventListener('change', function() {
-                const portionControls = document.getElementById('portionControls');
-                const customFoodInput = document.getElementById('customFoodInput');
-                const macroInputs = document.getElementById('macroInputs');
-
-                if (this.value === 'custom') {
-                    portionControls.style.display = 'none';
-                    customFoodInput.style.display = 'block';
-                    macroInputs.style.display = 'flex';
-                } else if (this.value) {
-                    portionControls.style.display = 'flex';
-                    customFoodInput.style.display = 'none';
-                    macroInputs.style.display = 'none';
-                    updateFoodEstimate();
-                } else {
-                    portionControls.style.display = 'none';
-                    customFoodInput.style.display = 'none';
-                    macroInputs.style.display = 'none';
-                }
-            });
-        });
-
-        // Add workout entry
-        function addWorkout() {
-            const workoutName = document.getElementById('workoutName').value.trim();
-            const workoutDuration = parseFloat(document.getElementById('workoutDuration').value);
-            const workoutCalories = parseFloat(document.getElementById('workoutCalories').value);
-            const workoutIntensity = document.getElementById('workoutIntensity').value;
-
-            if (!workoutName || isNaN(workoutDuration) || isNaN(workoutCalories)) {
-                alert('Please fill in all workout fields');
-                return;
-            }
-
-            const workoutEntry = {
-                id: Date.now(),
-                name: workoutName,
-                duration: workoutDuration,
-                calories: Math.round(workoutCalories),
-                intensity: workoutIntensity,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.workouts.push(workoutEntry);
-            saveCurrentUserData();
-
-            // Show success message
-            const message = document.getElementById('workoutAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            // Reset form
-            document.getElementById('workoutName').value = '';
-            document.getElementById('workoutDuration').value = '';
-            document.getElementById('workoutCalories').value = '';
-            document.getElementById('workoutIntensity').value = 'moderate';
-
-            updateDisplay();
-        }
-
-        // Quick add workout
-        function quickAddWorkout(name, duration, calories, intensity) {
-            const workoutEntry = {
-                id: Date.now(),
-                name,
-                duration,
-                calories: Math.round(calories),
-                intensity,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.workouts.push(workoutEntry);
-            saveCurrentUserData();
-
-            // Show success message
-            const message = document.getElementById('workoutAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            updateDisplay();
-        }
-
-        // Remove food entry
-        function removeFood(id) {
-            todayData.foods = todayData.foods.filter(f => f.id !== id);
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Remove workout entry
-        function removeWorkout(id) {
-            todayData.workouts = todayData.workouts.filter(w => w.id !== id);
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Update daily calorie goal
-        function updateGoal() {
-            const newGoal = parseInt(document.getElementById('calorieGoal').value);
-            if (isNaN(newGoal) || newGoal < 1000) {
-                alert('Please enter a valid calorie goal');
-                return;
-            }
-            todayData.dailyGoal = newGoal;
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Update macro goals
-        function updateMacros() {
-            const proteinGoal = parseInt(document.getElementById('proteinGoalInput').value);
-            const carbsGoal = parseInt(document.getElementById('carbsGoalInput').value);
-            const fatGoal = parseInt(document.getElementById('fatGoalInput').value);
-
-            if (isNaN(proteinGoal) || isNaN(carbsGoal) || isNaN(fatGoal)) {
-                alert('Please enter valid macro goals');
-                return;
-            }
-
-            todayData.proteinGoal = proteinGoal;
-            todayData.carbsGoal = carbsGoal;
-            todayData.fatGoal = fatGoal;
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Set preset goals
-        function setPreset(preset) {
-            const user = getCurrentUser();
-            const tdee = todayData.dailyGoal;
-
-            if (preset === 'cut') {
-                todayData.dailyGoal = Math.round(tdee * 0.85);
-                todayData.proteinGoal = Math.round(user.weight * 2.2);
-                todayData.carbsGoal = Math.round(tdee * 0.85 * 0.40 / 4);
-                todayData.fatGoal = Math.round(tdee * 0.85 * 0.30 / 9);
-            } else if (preset === 'maintain') {
-                todayData.dailyGoal = Math.round(tdee);
-                todayData.proteinGoal = Math.round(user.weight * 1.8);
-                todayData.carbsGoal = Math.round(tdee * 0.45 / 4);
-                todayData.fatGoal = Math.round(tdee * 0.30 / 9);
-            } else if (preset === 'bulk') {
-                todayData.dailyGoal = Math.round(tdee * 1.10);
-                todayData.proteinGoal = Math.round(user.weight * 1.6);
-                todayData.carbsGoal = Math.round(tdee * 1.10 * 0.50 / 4);
-                todayData.fatGoal = Math.round(tdee * 1.10 * 0.30 / 9);
-            }
-
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Reset all data
-        function resetAllData() {
-            if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
-                todayData = {
-                    foods: [],
-                    workouts: [],
-                    dailyGoal: 2200,
-                    proteinGoal: 150,
-                    carbsGoal: 250,
-                    fatGoal: 70
-                };
-                saveCurrentUserData();
-                updateDisplay();
-            }
-        }
-
-        // Switch tabs
-        function switchTab(tabId, btn) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-            // Show selected tab
-            const el = document.getElementById(tabId);
-            if (el) el.classList.add('active');
-
-            // Mark active button
-            if (btn) btn.classList.add('active');
-        });
-
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected tab
-            document.getElementById(tabId).classList.add('active');
-
-            // Add active class to clicked button
-            if (btn) btn.classList.add('active');
-        }
-
-        // Update users list display
-        function updateUsersList() {
-            const container = document.getElementById('usersContainer');
-            container.innerHTML = '';
-
-            users.forEach(user => {
-                const isActive = user.id === currentUserId;
-                const userDiv = document.createElement('div');
-                userDiv.style.cssText = `
-                    background: ${isActive ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
-                    border: 2px solid ${isActive ? 'rgba(56, 189, 248, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
-                    border-radius: 12px;
-                    padding: 15px;
-                    margin-bottom: 10px;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                `;
-
-                userDiv.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="color: var(--color-text-primary);">${user.name}</strong>
-                            <div style="font-size: 0.85em; color: var(--color-text-secondary); margin-top: 4px;">
-                                ${user.weight}kg • ${user.age}y • ${user.activityLevel}
-                            </div>
-                        </div>
-                        <button onclick="switchUser(${user.id})" style="padding: 6px 12px; font-size: 0.85em;">
-                            ${isActive ? '✓ Active' : 'Switch'}
-                        </button>
-                    </div>
-                `;
-
-                container.appendChild(userDiv);
-            });
-        }
-
-        // Calculate totals
-        function calculateTotals() {
-            const totalCalories = todayData.foods.reduce((sum, food) => sum + food.calories, 0);
-            const totalProtein = todayData.foods.reduce((sum, food) => sum + food.protein, 0);
-            const totalCarbs = todayData.foods.reduce((sum, food) => sum + food.carbs, 0);
-            const totalFat = todayData.foods.reduce((sum, food) => sum + food.fat, 0);
-            const burnedCalories = todayData.workouts.reduce((sum, workout) => sum + workout.calories, 0);
-
-            return {
-                calories: Math.round(totalCalories),
-                protein: Math.round(totalProtein * 10) / 10,
-                carbs: Math.round(totalCarbs * 10) / 10,
-                fat: Math.round(totalFat * 10) / 10,
-                burned: Math.round(burnedCalories),
-                net: Math.round(totalCalories - burnedCalories)
-            };
-        }
-
-        // Update display
-        function updateDisplay() {
-            const totals = calculateTotals();
-            const remaining = todayData.dailyGoal - totals.calories;
-
-            // Update summary cards
-            document.getElementById('caloriesSummary').textContent = totals.calories;
-            document.getElementById('dailyGoalDisplay').textContent = todayData.dailyGoal;
-            document.getElementById('remaining').textContent = `${remaining >= 0 ? '+' : ''}${remaining} remaining`;
-            document.getElementById('caloriesBurned').textContent = totals.burned;
-            document.getElementById('workoutCount').textContent = todayData.workouts.length;
-
-            // Update goal displays
-            document.getElementById('calorieGoal').value = todayData.dailyGoal;
-            document.getElementById('proteinGoalDisplay').textContent = `${todayData.proteinGoal}g`;
-            document.getElementById('carbsGoalDisplay').textContent = `${todayData.carbsGoal}g`;
-            document.getElementById('fatGoalDisplay').textContent = `${todayData.fatGoal}g`;
-            document.getElementById('proteinGoalInput').value = todayData.proteinGoal;
-            document.getElementById('carbsGoalInput').value = todayData.carbsGoal;
-            document.getElementById('fatGoalInput').value = todayData.fatGoal;
-
-            // Update macro progress bars
-            const proteinPercent = Math.min((totals.protein / todayData.proteinGoal) * 100, 100);
-            const carbsPercent = Math.min((totals.carbs / todayData.carbsGoal) * 100, 100);
-            const fatPercent = Math.min((totals.fat / todayData.fatGoal) * 100, 100);
-
-            document.getElementById('proteinBar').style.width = proteinPercent + '%';
-            document.getElementById('carbsBar').style.width = carbsPercent + '%';
-            document.getElementById('fatBar').style.width = fatPercent + '%';
-
-            document.getElementById('totalProtein').textContent = totals.protein;
-            document.getElementById('totalCarbs').textContent = totals.carbs;
-            document.getElementById('totalFat').textContent = totals.fat;
-            document.getElementById('proteinGoal').textContent = todayData.proteinGoal;
-            document.getElementById('carbsGoal').textContent = todayData.carbsGoal;
-            document.getElementById('fatGoal').textContent = todayData.fatGoal;
-
-            // Update history tab
-            document.getElementById('historyCalories').textContent = totals.calories;
-            document.getElementById('historyBurned').textContent = totals.burned;
-            document.getElementById('historyNet').textContent = totals.net;
-            document.getElementById('historyProtein').textContent = totals.protein;
-            document.getElementById('historyCarbs').textContent = totals.carbs;
-            document.getElementById('historyFat').textContent = totals.fat;
-
-            // Update food list
-            updateFoodList();
-
-            // Update workout list
-            updateWorkoutList();
-                    updateDashboard();
-}
-
-        // Update food list display
-        function updateFoodList() {
-            const container = document.getElementById('foodListContainer');
-
-            if (todayData.foods.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🍽️</div>
-                        <p>No foods logged yet. Start by adding your meals!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = todayData.foods.map(food => `
-                <div class="food-item">
-                    <div class="food-details">
-                        <div class="food-name">${food.name}</div>
-                        <div class="food-calories">
-                            <span class="food-calories-value">${food.calories} cal</span> • 
-                            P: ${food.protein}g • C: ${food.carbs}g • F: ${food.fat}g • ${food.time}
-                        </div>
-                    </div>
-                    <button class="btn-small btn-danger" onclick="removeFood(${food.id})">Remove</button>
-                </div>
-            `).join('');
-        }
-
-        // Update workout list display
-        function updateWorkoutList() {
-            const container = document.getElementById('workoutListContainer');
-
-            if (todayData.workouts.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💪</div>
-                        <p>No workouts logged yet. Great job planning your gym session!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = todayData.workouts.map(workout => `
-                <div class="workout-item">
-                    <div class="workout-details">
-                        <div class="workout-name">${workout.name}</div>
-                        <div class="workout-burned">
-                            ${workout.duration} min • ${workout.calories} cal burned (${workout.intensity}) • ${workout.time}
-                        </div>
-                    </div>
-                    <button class="btn-small btn-danger" onclick="removeWorkout(${workout.id})">Remove</button>
-                </div>
-            `).join('');
-        }
-
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            // Create default user if none exists
-            if (!loaded || users.length === 0) {
-            if (users.length === 0) {
-                const defaultUser = {
-                    id: Date.now(),
-                    name: 'You',
-                    email: '',
-                    height: 175,
-                    weight: 75,
-                    gender: '',
-                    age: 25,
-                    wakeTime: '08:00',
-                    sleepTime: '23:00',
-                    activityLevel: 'active',
-                    createdDate: new Date().toLocaleDateString(),
-                    dailyGoal: 2200,
-                    proteinGoal: 150,
-                    carbsGoal: 250,
-                    fatGoal: 70,
-                    foods: [],
-                    workouts: []
-                };
-                users.push(defaultUser);
-            }
-            
-            if (currentUserId === null && users.length > 0) {
-                currentUserId = users[0].id;
-                syncCurrentUserData();
-            }
-            
-            updateDisplay();
-            updateUsersList();
-            saveAppData();
-        });me').value = '';
-            document.getElementById('foodCalories').value = '';
-            document.getElementById('foodProtein').value = '';
-            document.getElementById('foodCarbs').value = '';
-            document.getElementById('foodFat').value = '';
-            document.getElementById('portionControls').style.display = 'none';
-            document.getElementById('customFoodInput').style.display = 'none';
-            document.getElementById('macroInputs').style.display = 'flex';
-
-            updateDisplay();
-        }
-
-        // Quick add food with predefined macros
-        function quickAddFood(name, calories, protein, carbs, fat) {
-            const foodEntry = {
-                id: Date.now(),
-                name,
-                calories,
-                protein,
-                carbs,
-                fat,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.foods.push(foodEntry);
-            saveCurrentUserData();
-
-            const message = document.getElementById('foodAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            updateDisplay();
-        }
-
-        // Update food estimate based on portion
-        function updateFoodEstimate() {
-            const foodSelect = document.getElementById('foodSelect');
-            const portionSize = parseFloat(document.getElementById('portionSize').value) || 1;
-            const selectedValue = foodSelect.value;
-
-            if (selectedValue === 'custom') {
-                document.getElementById('portionControls').style.display = 'none';
-                document.getElementById('customFoodInput').style.display = 'flex';
-                document.getElementById('macroInputs').style.display = 'flex';
-                return;
-            }
-
-            if (!selectedValue) {
-                document.getElementById('portionControls').style.display = 'none';
-                return;
-            }
-
-            const food = foodDatabase[selectedValue];
-            if (!food) return;
-
-            document.getElementById('portionControls').style.display = 'flex';
-            document.getElementById('customFoodInput').style.display = 'none';
-            const estimatedCals = Math.round(food.baseCals * portionSize);
-            document.getElementById('calorieEstimate').textContent = `Est: ${estimatedCals} cal`;
-        }
-
-        // Add workout
-        function addWorkout() {
-            const name = document.getElementById('workoutName').value.trim();
-            const duration = parseFloat(document.getElementById('workoutDuration').value);
-            const calories = parseFloat(document.getElementById('workoutCalories').value);
-            const intensity = document.getElementById('workoutIntensity').value;
-
-            if (!name || isNaN(duration) || isNaN(calories)) {
-                alert('Please fill in all workout fields');
-                return;
-            }
-
-            const workoutEntry = {
-                id: Date.now(),
-                name,
-                duration,
-                calories: Math.round(calories),
-                intensity,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.workouts.push(workoutEntry);
-            saveCurrentUserData();
-
-            const message = document.getElementById('workoutAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            document.getElementById('workoutName').value = '';
-            document.getElementById('workoutDuration').value = '';
-            document.getElementById('workoutCalories').value = '';
-            document.getElementById('workoutIntensity').value = 'moderate';
-
-            updateDisplay();
-        }
-
-        // Quick add workout
-        function quickAddWorkout(name, duration, calories, intensity) {
-            const workoutEntry = {
-                id: Date.now(),
-                name,
-                duration,
-                calories,
-                intensity,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            todayData.workouts.push(workoutEntry);
-            saveCurrentUserData();
-
-            const message = document.getElementById('workoutAddedMessage');
-            message.classList.add('show');
-            setTimeout(() => message.classList.remove('show'), 2000);
-
-            updateDisplay();
-        }
-
-        // Delete food
-        function deleteFood(id) {
-            todayData.foods = todayData.foods.filter(f => f.id !== id);
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Delete food
-        function deleteFood(id) {
-            todayData.foods = todayData.foods.filter(f => f.id !== id);
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Delete workout
-        function deleteWorkout(id) {
-            todayData.workouts = todayData.workouts.filter(w => w.id !== id);
-            saveCurrentUserData();
-            updateDisplay();
-        }
-
-        // Update goals
-        function updateGoal() {
-            const calorieGoal = parseFloat(document.getElementById('calorieGoal').value);
-            if (isNaN(calorieGoal) || calorieGoal < 1000) {
-                alert('Please enter a valid calorie goal');
-                return;
-            }
-            todayData.dailyGoal = calorieGoal;
-            const user = getCurrentUser();
-            if (user) user.dailyGoal = calorieGoal;
-            document.getElementById('calorieGoal').value = '';
-            updateDisplay();
-        }
-
-        // Update macros
-        function updateMacros() {
-            const protein = parseFloat(document.getElementById('proteinGoalInput').value);
-            const carbs = parseFloat(document.getElementById('carbsGoalInput').value);
-            const fat = parseFloat(document.getElementById('fatGoalInput').value);
-
-            if (isNaN(protein) || isNaN(carbs) || isNaN(fat)) {
-                alert('Please enter valid macro values');
-                return;
-            }
-
-            todayData.proteinGoal = protein;
-            todayData.carbsGoal = carbs;
-            todayData.fatGoal = fat;
-
-            const user = getCurrentUser();
-            if (user) {
-                user.proteinGoal = protein;
-                user.carbsGoal = carbs;
-                user.fatGoal = fat;
-            }
-
-            alert('Macro goals updated!');
-            updateDisplay();
-        }
-
-        // Set preset goals
-        function setPreset(type) {
-            const user = getCurrentUser();
-            if (!user) return;
-
-            const weight = user.weight;
-            const bmr = calculateBMR(weight, user.height, user.age, user.gender);
-            const tdee = calculateTDEE(bmr, user.activityLevel);
-
-            let calorieGoal, proteinGoal, carbsGoal, fatGoal;
-
-            if (type === 'cut') {
-                calorieGoal = Math.round(tdee * 0.85);
-                proteinGoal = Math.round(weight * 2.2);
-                carbsGoal = Math.round(calorieGoal * 0.35 / 4);
-                fatGoal = Math.round(calorieGoal * 0.25 / 9);
-            } else if (type === 'maintain') {
-                calorieGoal = Math.round(tdee);
-                proteinGoal = Math.round(weight * 1.8);
-                carbsGoal = Math.round(calorieGoal * 0.45 / 4);
-                fatGoal = Math.round(calorieGoal * 0.3 / 9);
-            } else if (type === 'bulk') {
-                calorieGoal = Math.round(tdee * 1.15);
-                proteinGoal = Math.round(weight * 1.8);
-                carbsGoal = Math.round(calorieGoal * 0.5 / 4);
-                fatGoal = Math.round(calorieGoal * 0.3 / 9);
-            }
-
-            todayData.dailyGoal = calorieGoal;
-            todayData.proteinGoal = proteinGoal;
-            todayData.carbsGoal = carbsGoal;
-            todayData.fatGoal = fatGoal;
-
-            user.dailyGoal = calorieGoal;
-            user.proteinGoal = proteinGoal;
-            user.carbsGoal = carbsGoal;
-            user.fatGoal = fatGoal;
-
-            document.getElementById('calorieGoal').value = calorieGoal;
-            document.getElementById('proteinGoalInput').value = proteinGoal;
-            document.getElementById('carbsGoalInput').value = carbsGoal;
-            document.getElementById('fatGoalInput').value = fatGoal;
-
-            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} preset applied!\nCalories: ${calorieGoal} | Protein: ${proteinGoal}g | Carbs: ${carbsGoal}g | Fat: ${fatGoal}g`);
-            updateDisplay();
-        }
-
-        // Update users list
-        function updateUsersList() {
-            const container = document.getElementById('usersContainer');
-            container.innerHTML = '';
-
-            if (users.length === 0) {
-                container.innerHTML = '<p style="color: var(--color-text-secondary);">No users created yet.</p>';
-                return;
-            }
-
-            users.forEach(user => {
-                const isActive = user.id === currentUserId;
-                const userDiv = document.createElement('div');
-                userDiv.style.cssText = `
-                    background: ${isActive ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(167, 139, 250, 0.1) 100%)' : 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%)'};
-                    border: 2px solid ${isActive ? 'var(--color-primary)' : 'rgba(56, 189, 248, 0.2)'};
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 12px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                `;
-
-                const infoDiv = document.createElement('div');
-                infoDiv.innerHTML = `
-                    <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px;">${user.name}</div>
-                    <div style="font-size: 0.85em; color: var(--color-text-secondary);">
-                        Age ${user.age} • ${user.gender} • ${user.weight}kg • Goal: ${user.dailyGoal} cal
-                    </div>
-                `;
-
-                const buttonDiv = document.createElement('div');
-                buttonDiv.style.cssText = 'display: flex; gap: 8px;';
-                
-                const switchBtn = document.createElement('button');
-                switchBtn.textContent = isActive ? '✓ Active' : 'Switch';
-                switchBtn.className = 'btn-small';
-                switchBtn.style.cssText = `
-                    background: ${isActive ? 'var(--color-success)' : 'var(--color-primary)'};
-                    color: white;
-                    padding: 8px 12px;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    font-size: 0.85em;
-                    transition: all 0.3s ease;
-                `;
-                switchBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    switchUser(user.id);
-                };
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = '🗑️';
-                deleteBtn.style.cssText = `
-                    background: transparent;
-                    color: var(--color-error);
-                    border: 1px solid var(--color-error);
-                    padding: 8px 10px;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 1em;
-                    transition: all 0.3s ease;
-                `;
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    if (users.length > 1) {
-                        users = users.filter(u => u.id !== user.id);
-                        if (currentUserId === user.id) {
-                            currentUserId = users[0].id;
-                            syncCurrentUserData();
-                        }
-                        updateUsersList();
-            saveAppData();
-                        updateDisplay();
-                    } else {
-                        alert('Cannot delete the only user');
-                    }
-                };
-
-                buttonDiv.appendChild(switchBtn);
-                buttonDiv.appendChild(deleteBtn);
-
-                userDiv.appendChild(infoDiv);
-                userDiv.appendChild(buttonDiv);
-                container.appendChild(userDiv);
-            });
-        }
-
-        // Update display
-        function updateDisplay() {
-            // Update summary cards
-            const totalCalories = todayData.foods.reduce((sum, f) => sum + f.calories, 0);
-            const totalBurned = todayData.workouts.reduce((sum, w) => sum + w.calories, 0);
-            const remaining = todayData.dailyGoal - totalCalories;
-
-            document.getElementById('caloriesSummary').textContent = totalCalories;
-            document.getElementById('dailyGoalDisplay').textContent = todayData.dailyGoal;
-            document.getElementById('remaining').textContent = (remaining >= 0 ? '+' : '') + remaining + ' remaining';
-            document.getElementById('remaining').style.color = remaining < 0 ? 'var(--color-warning)' : 'var(--color-primary)';
-
-            document.getElementById('caloriesBurned').textContent = totalBurned;
-            document.getElementById('workoutCount').textContent = todayData.workouts.length;
-
-            // Update food list
-            const foodContainer = document.getElementById('foodListContainer');
-            if (todayData.foods.length === 0) {
-                foodContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🍽️</div>
-                        <p>No foods logged yet. Start by adding your meals!</p>
-                    </div>
-                `;
-            } else {
-                foodContainer.innerHTML = todayData.foods.map(food => `
-                    <div class="food-item">
-                        <div class="food-details">
-                            <div class="food-name">${food.name}</div>
-                            <div class="food-calories">
-                                <span class="food-calories-value">${food.calories}</span> cal
-                                ${food.protein ? ` • P: ${food.protein}g` : ''}
-                                ${food.carbs ? ` • C: ${food.carbs}g` : ''}
-                                ${food.fat ? ` • F: ${food.fat}g` : ''}
-                                <span style="color: var(--color-text-secondary); margin-left: 10px;">${food.time}</span>
-                            </div>
-                        </div>
-                        <button class="btn-small btn-danger" onclick="deleteFood(${food.id})">Delete</button>
-                    </div>
-                `).join('');
-            }
-
-            // Update macros
-            const totalProtein = todayData.foods.reduce((sum, f) => sum + (f.protein || 0), 0);
-            const totalCarbs = todayData.foods.reduce((sum, f) => sum + (f.carbs || 0), 0);
-            const totalFat = todayData.foods.reduce((sum, f) => sum + (f.fat || 0), 0);
-
-            document.getElementById('totalProtein').textContent = Math.round(totalProtein);
-            document.getElementById('proteinGoal').textContent = todayData.proteinGoal;
-            document.getElementById('proteinBar').style.width = Math.min((totalProtein / todayData.proteinGoal) * 100, 100) + '%';
-
-            document.getElementById('totalCarbs').textContent = Math.round(totalCarbs);
-            document.getElementById('carbsGoal').textContent = todayData.carbsGoal;
-            document.getElementById('carbsBar').style.width = Math.min((totalCarbs / todayData.carbsGoal) * 100, 100) + '%';
-
-            document.getElementById('totalFat').textContent = Math.round(totalFat);
-            document.getElementById('fatGoal').textContent = todayData.fatGoal;
-            document.getElementById('fatBar').style.width = Math.min((totalFat / todayData.fatGoal) * 100, 100) + '%';
-
-            // Update goals display
-            document.getElementById('proteinGoalDisplay').textContent = todayData.proteinGoal + 'g';
-            document.getElementById('carbsGoalDisplay').textContent = todayData.carbsGoal + 'g';
-            document.getElementById('fatGoalDisplay').textContent = todayData.fatGoal + 'g';
-
-            // Update workout list
-            const workoutContainer = document.getElementById('workoutListContainer');
-            if (todayData.workouts.length === 0) {
-                workoutContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💪</div>
-                        <p>No workouts logged yet. Great job planning your gym session!</p>
-                    </div>
-                `;
-            } else {
-                workoutContainer.innerHTML = todayData.workouts.map(workout => `
-                    <div class="workout-item">
-                        <div class="workout-details">
-                            <div class="workout-name">${workout.name}</div>
-                            <div class="workout-burned">
-                                <span class="food-calories-value">${workout.calories}</span> cal burned
-                                • ${workout.duration} min • ${workout.intensity}
-                                <span style="color: var(--color-text-secondary); margin-left: 10px;">${workout.time}</span>
-                            </div>
-                        </div>
-                        <button class="btn-small btn-danger" onclick="deleteWorkout(${workout.id})">Delete</button>
-                    </div>
-                `).join('');
-            }
-
-            // Update history
-            document.getElementById('historyCalories').textContent = totalCalories;
-            document.getElementById('historyBurned').textContent = totalBurned;
-            document.getElementById('historyNet').textContent = (totalCalories - totalBurned);
-            document.getElementById('historyProtein').textContent = Math.round(totalProtein);
-            document.getElementById('historyCarbs').textContent = Math.round(totalCarbs);
-            document.getElementById('historyFat').textContent = Math.round(totalFat);
-
-            // Update goals inputs
-            document.getElementById('calorieGoal').value = todayData.dailyGoal;
-            document.getElementById('proteinGoalInput').value = todayData.proteinGoal;
-            document.getElementById('carbsGoalInput').value = todayData.carbsGoal;
-            document.getElementById('fatGoalInput').value = todayData.fatGoal;
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
-
-            // Add active class to clicked button
-            if (btn) btn.classList.add('active');
-        }
-
-        // Reset all data
-        function resetAllData() {
-            if (confirm('Are you sure you want to reset all data for today? This cannot be undone.')) {
-                todayData = {
-                    foods: [],
-                    workouts: [],
-                    dailyGoal: 2000,
-                    proteinGoal: 150,
-                    carbsGoal: 250,
-                    fatGoal: 70
-                };
-                saveCurrentUserData();
-                updateDisplay();
-                alert('All data reset!');
-            }
-        }
-    
-        // -----------------------------
-        // Open Food Facts Integration
-        // -----------------------------
-        let offSearchTimer = null;
-        let selectedOFFProduct = null;
-
-        function debouncedOFFSearch() {
-            clearTimeout(offSearchTimer);
-            offSearchTimer = setTimeout(searchOFF, 350);
-        }
-
-        async function searchOFF() {
-            const q = (document.getElementById('offSearch')?.value || '').trim();
-            const resultsDiv = document.getElementById('offResults');
-            const portionGroup = document.getElementById('offPortionGroup');
-
-            if (!resultsDiv || !portionGroup) return;
-
-            resultsDiv.innerHTML = '';
-            portionGroup.style.display = 'none';
-            selectedOFFProduct = null;
-
-            if (q.length < 3) {
-                resultsDiv.innerHTML = '<div class="small-text">Type at least 3 characters to search.</div>';
-                return;
-            }
-
-            try {
-                const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(q)}&page_size=10&fields=code,product_name,brands,quantity,nutriments,image_front_url`;
-                const res = await fetch(url);
-                const data = await res.json();
-
-                if (!data || !data.products || data.products.length === 0) {
-                    resultsDiv.innerHTML = '<div class="small-text">No matches found. Try a different keyword (brand + product).</div>';
-                    return;
-                }
-
-                data.products.forEach((p, idx) => {
-                    const name = (p.product_name || 'Unnamed product').trim();
-                    const brand = (p.brands || '').split(',')[0]?.trim();
-                    const qty = (p.quantity || '').trim();
-
-                    const kcal100 = p?.nutriments?.['energy-kcal_100g'];
-                    const kcalText = (kcal100 !== undefined && kcal100 !== null) ? `${Number(kcal100).toFixed(0)} kcal / 100g` : 'kcal not available';
-
-                    const btn = document.createElement('button');
-                    btn.className = 'preset-btn';
-                    btn.style.textAlign = 'left';
-                    btn.innerHTML = `<div style="font-weight:600;">${escapeHtml(name)}</div>
-                                     <div class="small-text">${escapeHtml([brand, qty].filter(Boolean).join(' • '))} — ${kcalText}</div>`;
-                    btn.onclick = () => selectOFFProduct(p);
-
-                    resultsDiv.appendChild(btn);
-                });
-            } catch (e) {
-                resultsDiv.innerHTML = '<div class="small-text">Could not reach Open Food Facts. Please check your internet connection.</div>';
-            }
-        }
-
-        function selectOFFProduct(product) {
-            selectedOFFProduct = product;
-            const portionGroup = document.getElementById('offPortionGroup');
-            if (portionGroup) portionGroup.style.display = 'block';
-            updateOFFEstimate();
-        }
-
-        function updateOFFEstimate() {
-            const est = document.getElementById('offEstimate');
-            const portion = Number(document.getElementById('offPortion')?.value || 0);
-
-            if (!est) return;
-
-            if (!selectedOFFProduct) {
-                est.textContent = '—';
-                return;
-            }
-
-            const n = selectedOFFProduct.nutriments || {};
-            const kcal100 = Number(n['energy-kcal_100g'] ?? NaN);
-            const protein100 = Number(n['proteins_100g'] ?? NaN);
-            const carbs100 = Number(n['carbohydrates_100g'] ?? NaN);
-            const fat100 = Number(n['fat_100g'] ?? NaN);
-
-            if (!portion || portion <= 0) {
-                est.textContent = 'Enter a valid portion.';
-                return;
-            }
-
-            if (!isFinite(kcal100)) {
-                est.textContent = 'Nutrition data not available for this item (energy-kcal_100g missing). Try another product.';
-                return;
-            }
-
-            const factor = portion / 100;
-            const kcal = kcal100 * factor;
-
-            const p = isFinite(protein100) ? protein100 * factor : null;
-            const c = isFinite(carbs100) ? carbs100 * factor : null;
-            const f = isFinite(fat100) ? fat100 * factor : null;
-
-            const parts = [
-                `${kcal.toFixed(0)} kcal`,
-                p !== null ? `P ${p.toFixed(1)}g` : null,
-                c !== null ? `C ${c.toFixed(1)}g` : null,
-                f !== null ? `F ${f.toFixed(1)}g` : null
-            ].filter(Boolean);
-
-            est.textContent = `Estimated for ${portion}g: ` + parts.join(' • ');
-        }
-
-        function addOFFFood() {
-            if (!selectedOFFProduct) return;
-
-            const portion = Number(document.getElementById('offPortion')?.value || 0);
-            if (!portion || portion <= 0) return;
-
-            const n = selectedOFFProduct.nutriments || {};
-            const kcal100 = Number(n['energy-kcal_100g'] ?? NaN);
-            if (!isFinite(kcal100)) {
-                alert('This product is missing calorie data (energy-kcal_100g). Please pick another product.');
-                return;
-            }
-
-            const factor = portion / 100;
-
-            const calories = kcal100 * factor;
-            const protein = Number(n['proteins_100g'] ?? 0) * factor;
-            const carbs = Number(n['carbohydrates_100g'] ?? 0) * factor;
-            const fat = Number(n['fat_100g'] ?? 0) * factor;
-
-            const name = (selectedOFFProduct.product_name || 'Food item').trim();
-            const brand = (selectedOFFProduct.brands || '').split(',')[0]?.trim();
-            const fullName = [name, brand].filter(Boolean).join(' — ');
-
-            // Reuse existing storage format used by the app
-            const user = getCurrentUser();
-            if (!user) return;
-
-            const entry = {
-                id: Date.now(),
-                name: fullName,
-                calories: Math.round(calories),
-                protein: Math.round(protein * 10) / 10,
-                carbs: Math.round(carbs * 10) / 10,
-                fat: Math.round(fat * 10) / 10,
-                portion: portion,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                source: 'Open Food Facts'
-            };
-
-            user.foodEntries.push(entry);
-
-            saveCurrentUserData();
-            updateDisplay();
-
-            // show success message if present
-            const msg = document.getElementById('foodAddedMessage');
-            if (msg) {
-                msg.classList.add('show');
-                setTimeout(() => msg.classList.remove('show'), 2000);
-            }
-        }
-
-        // Basic HTML escape to avoid injection in results list
-        function escapeHtml(str) {
-            return String(str || '').replace(/[&<>"']/g, function (m) {
-                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
-            });
-        }
-
-
-        // -----------------------------
-        // Daily History + Dashboard
-        // -----------------------------
-        function getDateKey(d = new Date()) {
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
-
-        function ensureUserHistory(user) {
-            if (!user.dailyHistory) user.dailyHistory = {};
-            const key = getDateKey();
-            if (!user.dailyHistory[key]) {
-                user.dailyHistory[key] = { foodEntries: [], workoutEntries: [] };
-            }
-            return user.dailyHistory[key];
-        }
-
-        // Patch getCurrentUser to always have dailyHistory and keep todayData synced
-        const _origGetCurrentUser = getCurrentUser;
-        getCurrentUser = function() {
-            const u = _origGetCurrentUser();
-            if (!u) return null;
-            ensureUserHistory(u);
-
-            // Keep todayData pointing to today's entries for this user
-            const k = getDateKey();
-            todayData.foodEntries = u.dailyHistory[k].foodEntries;
-            todayData.workoutEntries = u.dailyHistory[k].workoutEntries;
-            return u;
-        }
-
-        function updateDashboard() {
-            const user = getCurrentUser();
-            if (!user) return;
-
-            const { foodTotal, workoutTotal } = calculateTotals();
-            const goal = user.dailyGoal || todayData.dailyGoal || 0;
-
-            const elC = document.getElementById('dashTodayCalories');
-            const elN = document.getElementById('dashNetCalories');
-            const elG = document.getElementById('dashGoalCalories');
-
-            if (elC) elC.textContent = Math.round(foodTotal);
-            if (elN) elN.textContent = Math.round(foodTotal - workoutTotal);
-            if (elG) elG.textContent = Math.round(goal);
-
-            const out = document.getElementById('dash7Days');
-            if (!out) return;
-
-            const lines = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const key = getDateKey(d);
-                const day = user.dailyHistory?.[key];
-
-                const dayFood = (day?.foodEntries || []).reduce((s, e) => s + (Number(e.calories) || 0), 0);
-                const dayWorkout = (day?.workoutEntries || []).reduce((s, e) => s + (Number(e.calories) || 0), 0);
-
-                lines.push(`${key}: ${Math.round(dayFood)} kcal (net ${Math.round(dayFood - dayWorkout)})`);
-            }
-            out.textContent = lines.join(' | ');
-        }
-
+        updateDisplay();
+        updateUsersList();
+    });
 </script>
-</body>
-</html>
